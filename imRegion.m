@@ -30,7 +30,6 @@ end
 methods
     % imRegion: executes upon the creation of the object
     function obj = imRegion(imobj,type,func)
-
         % Assign the user supplied input
         obj.parent = imobj;
         obj.func = func;
@@ -45,14 +44,12 @@ methods
 
     % SET.FUNC: operates when the func property is changed
     function obj = set.func(obj,input)
-        
         switch lower(input)
             case {'e','ellipse','imellipse'};      obj.func = 'imellipse';
             case {'f','freehand','imfreehand'};    obj.func = 'imfreehand';
             case {'p','poly','polygon','impoly'};  obj.func = 'impoly';    
             case {'r','rect','rectangle','imrect'};obj.func = 'imrect';
-        end  
-        
+        end     
     end
     
     % CREATEREGION: builds the imroi region
