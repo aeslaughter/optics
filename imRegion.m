@@ -17,6 +17,7 @@ properties
     color = 'b'; % Color of the region
     label; % Label to place within the region for identification
     labelposition; % The coordinates for positioning the label
+    image; % Image filled with NaN's outside of the selection
 end
 
 % DEFINE THE PRIVE PROPERTIES
@@ -78,7 +79,12 @@ methods
     end    
     
     % GETREGION: collects the image information
-    function IM = getRegion(obj,varargin)
+    function obj = getRegion(obj,varargin)
+        % Disable the figure
+        H = findobj('enable','on');
+        set(H,'enable','off');
+        drawnow;
+          
         % Get the image information and develop the region mask
         I = double(obj.parent.image); % The image
         N = numel(I); % Number of pixels
@@ -100,7 +106,10 @@ methods
         Iind(~Rind) = NaN;
         
         % Return the region, as a double
-        IM = reshape(Iind,size(I));
+        obj.image = reshape(Iind,size(I));
+        
+        % Enable the figure
+        set(H,'enable','on');
     end
  
     % ADDLABEL: inserts the region label

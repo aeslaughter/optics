@@ -98,7 +98,7 @@ methods
         % Compute the mean values of the white regions
         theNorm = zeros(r,n);
         for i = 1:r;    
-            I = R(i).getRegion; 
+            I = R(i).image; 
             theNorm(i,:) = nanmean(nanmean(I));
         end
         
@@ -314,9 +314,11 @@ function obj = callback_createregion(obj,type,func)
 % CALLBACK_CREATEREGION gathers/creates regions via the imRegion class
 
 n = length(obj.(type)) + 1; 
-obj.(type)(n) = imRegion(obj,type,func);
-obj.(type)(n).addlabel([' ',num2str(n)]); 
+R = imRegion(obj,type,func);
+R.addlabel([' ',num2str(n)]); 
 drawnow;
+R.getRegion;
+obj.(type)(n) = R;
 if strcmpi(type,'white'); obj.calcNorm; end; 
 
 end

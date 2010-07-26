@@ -6,7 +6,7 @@ p.plugintype = 'VIS|NIR';
 p.MenuOrder = 1;
 p.MenuParent = 'Analysis';
 Callback = @(hObject,eventdata) callback_compare(hObject,eventdata,obj,p);
-p.MenuOptions = {'Label','Region Distribution(s)'};
+p.MenuOptions = {'Label','Region Distribution(s) Means'};
 
 p.MenuSubmenu{1} = {'Label','White','callback',Callback};
 p.MenuSubmenu{2} = {'Label','Work','callback',Callback};
@@ -38,6 +38,11 @@ function callback_compare(hObject,~,obj,p)
     end
         
 % 2 - GATHER THE OPTIONS
+    % General options
+    opt.norm = imObj.workNorm;
+    opt.rgb = false;
+    
+    % User options via preferences
     opt.kernel = p.Pref(1).Options{p.Pref(1).Value};
     opt.npoints = str2double(p.Pref(2).Value);
     opt.width = str2double(p.Pref(3).Value);

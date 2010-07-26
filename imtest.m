@@ -6,7 +6,7 @@ clear classes;
 close all hidden;
 
 % imObject save test
-imObj = imObject('final.jpg');
+imObj = imObject('final_small.jpg');
 % imObj.saveimObject('saved/test.imobj');
 
 

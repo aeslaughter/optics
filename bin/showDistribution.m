@@ -39,7 +39,7 @@ function h = showDistribution(R,varargin)
                 a.legend{k} = [R(i).parent.filename,':',R(i).type,':',R(i).label,'(',rgb{j},')'];
                   [f(:,k),xi(:,k)] = ksdensity(data,'kernel',opt.kernel,...
                     'npoints',opt.npoints);
-                k = k + 1
+                k = k + 1;
             end
         else
             data = reshape(r,1,numel(r));
@@ -47,7 +47,7 @@ function h = showDistribution(R,varargin)
             [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
                 'npoints',opt.npoints);
        end
-    end[1 0 0;0 1 0;0 0 1]
+    end
 
 % 4 - BUILD THE GRAPH
     if opt.rgb; a.colororder = [1 0 0;0 1 0;0 0 1]; end
