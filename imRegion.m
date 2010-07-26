@@ -81,10 +81,8 @@ methods
     % GETREGION: collects the image information
     function obj = getRegion(obj,varargin)
         % Disable the figure
-        H = findobj('enable','on');
-        set(H,'enable','off');
-        drawnow;
-          
+        obj.parent.progress;
+        
         % Get the image information and develop the region mask
         I = double(obj.parent.image); % The image
         N = numel(I); % Number of pixels
@@ -109,7 +107,7 @@ methods
         obj.image = reshape(Iind,size(I));
         
         % Enable the figure
-        set(H,'enable','on');
+        obj.parent.progress;
     end
  
     % ADDLABEL: inserts the region label

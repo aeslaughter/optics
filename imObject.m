@@ -44,6 +44,7 @@ properties (SetAccess = private)
     imaxes;   % Handle to the image axis
     plugins;  % Handles to the plugin object(s)
     ovhandle; % Handle of the overview window
+    hprog;    % Handles for toggling imObject functionallity 
 end
 
 % DEFINE THE DYNAMIC METHODS FOR THE imObject CLASS
@@ -90,10 +91,8 @@ methods
         r = length(R);
         n = size(obj.image,3);
         
-        % Determine handles to enable/disable
-        H = findobj('enable','on');
-        set(H,'enable','off');
-        drawnow;
+        % Disable imObject functionality
+        obj.progress
         
         % Compute the mean values of the white regions
         theNorm = zeros(r,n);
@@ -106,7 +105,7 @@ methods
         obj.norm = mean(theNorm,1); 
         
         % Restore functionality
-        set(H,'Enable','on');
+        obj.progress
     end
      
     % SAVEimObject: Allows user to save the imObject
@@ -140,6 +139,22 @@ methods
     
         % Restore the data
         for i = 1:length(tmp); obj.(tmp{i}) = S.(tmp{i}); end
+    end
+    
+    % PROGRESS: Toggles the funtionallity of the imObject on and off
+    function progress(obj)
+        % Disable handles
+        if isempty(obj.hprog)
+            obj.hprog = findobj('enable','on');
+            set(obj.hprog,'enable','off');
+            drawnow;
+            
+        % Enable handles    
+        else
+            set(obj.hprog,'enable','on');
+            obj.hprog = [];
+        end
+        
     end
     
     % DELETE: operates when the imObject is being destroyed
