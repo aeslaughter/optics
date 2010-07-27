@@ -19,52 +19,65 @@ function h = showDistribution(R,varargin)
     opt.height = 3;
     opt = gatheruseroptions(opt,varargin{:});
 
-% 2 - DISABLE THE FIGURE
-    H = findobj('enable','on');
-    set(H,'enable','off');
-    drawnow;
+% 2 - DEFINE THE IMOBJECT HANDLE AND DISABLE THE FIGURE(s)
+    imObj = R.parent;
+    imObj.progress;
     
 % 3 - SEPERATE THE REGIONS AND COMPUTE THE EPDF FUNCTIONS    
-    N = length(R);
-    f = zeros(opt.npoints,N); 
-    xi = f; % Initilize the output arrays
-    k = 1; % Initlize counter for RGB option
-    rgb = {'Blue','Green','Red'};
+    % 3.1 - Prepare for computing regions
+    N = length(R);              % The number of regions
+    f = zeros(opt.npoints,N);   % Initilize the output (f = prob. dens.)
+    xi = f;                     % Initilize the output (xi = refl.)
+    k = 1;                      % Initlize counter for RGB option
+    rgb = {'Red','Green','Blue'}; % Colors for Red/Green/Blue option
 
+    % 3.2 - Compute the region distributions
     for i = 1:N;
-        r = R(i).getRegion(opt.norm); % Get image region information (see imregion)   
+        r = R(i).image; % The current image region
+        
+        % 3.2.1 - Compute the RGB distributions
         if opt.rgb;
             for j = 1:size(r,3);
-                data = reshape(r(:,:,j),1,numel(r(:,:,j)));
-                a.legend{k} = [R(i).parent.filename,':',R(i).type,':',R(i).label,'(',rgb{j},')'];
-                  [f(:,k),xi(:,k)] = ksdensity(data,'kernel',opt.kernel,...
+                data = r(:,:,j);
+                X = reshape(data,numel(data),1);
+                a.legend{k} = [R(i).parent.filename,':',R(i).type,':',...
+                    R(i).label,'(',rgb{j},')'];
+                  [f(:,k),xi(:,k)] = ksdensity(X,'kernel',opt.kernel,...
                     'npoints',opt.npoints);
                 k = k + 1;
             end
+            
+        % 3.2.2 - Compute the mean distributions
         else
-            data = reshape(r,1,numel(r));
-            a.legend{i} = [R(i).parent.filename,':',R(i).type,':',R(i).label];
-            [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
+            data = mean(r,3); 
+            X = reshape(data,numel(data),1);
+            a.legend{i} = [R(i).parent.filename,':',R(i).type,':',...
+                R(i).label];
+            [f(:,i),xi(:,i)] = ksdensity(X,'kernel',opt.kernel,...
                 'npoints',opt.npoints);
        end
     end
 
 % 4 - BUILD THE GRAPH
-    if opt.rgb; a.colororder = [1 0 0;0 1 0;0 0 1]; end
+    % 4.1 - RGB option specific properties
+    if opt.rgb; 
+        a.colororder = [1 0 0; 0 1 0; 0 0 1]; 
+        a.linestyleorder = '-|--|:|-.';
+    end
 
+    % 4.2 - Define the general properties
     a.ylabel = 'Prob. Density';
     a.xlabel = 'Brightness';
     a.linewidth = 2;
-    a.interpreter = 'tex';
+    a.interpreter = 'none';
     a.tight = 'on';
     a.fontname = 'times'; a.fontsize = 9;
     a.location = 'best';
     a.size = [opt.width,opt.height];
 
-
+    % 4.3 - Produce the graph
     h = XYscatter(xi,f,'advanced',a);  
     
-    
 % 5 - ENABLE THE FIGURE
-    set(H,'enable','on');
+    imObj.progress;
         

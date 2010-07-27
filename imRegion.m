@@ -76,22 +76,24 @@ methods
     end    
     
     % GETREGION: collects the image information
-    function obj = getRegion(obj,varargin)
-        % Disable the figure
-        obj.parent.progress;
+    function obj = getRegion(obj)
+        % Initilize
+        imObj = obj.parent; % Calling imObject paretn
+       	imObj.progress; % Disable the imObject
         
         % Get the image information and develop the region mask
-        I = double(obj.parent.image); % The image
-        N = numel(I); % Number of pixels
+        I = double(imObj.image); % The image
+        N = numel(I);  % Number of pixels
         c = size(I,3); % Number of colors in image
 
-        if ~isempty(varargin) && varargin{1} && ~isempty(obj.parent.norm);
-           theNorm = obj.parent.norm;
-           for i = 1:c;
-              I(:,:,i) = I(:,:,i)/theNorm(i); 
-           end
+        % Normalize the image
+        if imObj.workNorm && ~isempty(imObj.norm);
+            for i = 1:c;
+                I(:,:,i) = I(:,:,i)/imObj.norm(i); 
+            end
         end
         
+        % Seperate the selected region
         R = createMask(obj.imroi); % The image mask of the region       
         R = repmat(R,[1,1,c]); % Expand the image mask
                 
@@ -103,8 +105,8 @@ methods
         % Return the region, as a double
         obj.image = reshape(Iind,size(I));
         
-        % Enable the figure
-        obj.parent.progress;
+        % Enable the imObject
+        imObj.progress;
     end
  
     % ADDLABEL: inserts the region label

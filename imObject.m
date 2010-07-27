@@ -83,9 +83,22 @@ methods
     
     % CALCNORM: Normalizes the data based on the white region(s)
     function obj = calcNorm(obj)
-        % Gather image information and return if no region exists
+        % Gather white region handles
         R = obj.white;
-        if isempty(R); return; end
+        
+        % Reset normalization in case white regions not defined or that the
+        % user has turned of the normalization in the general pref
+        if isempty(R) || ~obj.workNorm; 
+            obj.norm = []; % Remove the normal vector  
+                  
+            % Reset the work regions
+            R = obj.work;
+            for i = 1:length(R);
+                R(i).getRegion;
+            end
+                        
+            return; % Exit this method
+        end
         
         % Gather the normilization array dimensions
         r = length(R);
@@ -93,16 +106,24 @@ methods
         
         % Disable imObject functionality
         obj.progress
+        obj.norm = [];
         
         % Compute the mean values of the white regions
         theNorm = zeros(r,n);
-        for i = 1:r;    
-            I = R(i).image; 
+        for i = 1:r;  
+            R(i).getRegion;
+            I = R(i).image;
             theNorm(i,:) = nanmean(nanmean(I));
         end
-        
+
         % Update the normalization property
-        obj.norm = mean(theNorm,1); 
+        obj.norm = mean(theNorm,1);
+        
+        % Update the work regions
+        R = obj.work;
+        for i = 1:length(R);
+            R(i).getRegion;
+        end
         
         % Restore functionality
         obj.progress
@@ -154,6 +175,12 @@ methods
             set(obj.hprog,'enable','on');
             obj.hprog = [];
         end
+    end
+    
+    % SET.workNORM: Operates when the workNorm property is changed
+    function obj = set.workNorm(obj,input)
+        obj.workNorm = input;
+        obj.calcNorm;        
     end
     
     % DELETE: operates when the imObject is being destroyed
@@ -327,13 +354,18 @@ end
 function obj = callback_createregion(obj,type,func)
 % CALLBACK_CREATEREGION gathers/creates regions via the imRegion class
 
+% Create the region and label it
 n = length(obj.(type)) + 1; 
 R = imRegion(obj,type,func);
 R.addlabel([' ',num2str(n)]); 
-drawnow;
+
+% Create the image mask (i.e., NaNs outside of the selection)
 R.getRegion;
+drawnow;
+
+% Update the imObject and compute normalization vector for white region
 obj.(type)(n) = R;
-if strcmpi(type,'white'); obj.calcNorm; end; 
+if strcmpi(type,'white'); obj.calcNorm; end
 
 end
 

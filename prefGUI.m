@@ -73,23 +73,18 @@ imObj = guidata(hObject);
 tag = get(hObject,'Tag');
 
 % Set the imObject property
-try % catches an error if the tag and imObject property are not matched
-    switch get(hObject,'Style'); 
-        case {'checkbox','radiobutton'};
-            output = get(hObject,'Value');
-        case 'edit'
-            output = get(hObject,'String'); 
-        case {'popupmenu','listbox'};
-            val = get(hObject,'Value');
-            str = get(hObject,'String');
-            output = str{val};
-    end
-    imObj.(tag) = output;
-catch ME
-    error('HandleInvalid',...
-        'The uicontrol, %s, is not a valid imObject property!',tag);
+switch get(hObject,'Style'); 
+    case {'checkbox','radiobutton'};
+        output = get(hObject,'Value');
+    case 'edit'
+        output = get(hObject,'String'); 
+    case {'popupmenu','listbox'};
+        val = get(hObject,'Value');
+        str = get(hObject,'String');
+        output = str{val};
 end
-    
+imObj.(tag) = output;
+
 %--------------------------------------------------------------------------
 function buildpluginlist(H)
 % BUILDPLUGINLIST creates the selectable list of plugins
