@@ -154,7 +154,6 @@ methods
             set(obj.hprog,'enable','on');
             obj.hprog = [];
         end
-        
     end
     
     % DELETE: operates when the imObject is being destroyed
