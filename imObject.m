@@ -229,7 +229,7 @@ switch ext;
         
         % Reads the *.bip and *.bip.hdr files
         [obj.image, obj.info] = readBIP(obj.filename);
-        obj.type = 'HSI';
+        obj.type = {'HSI'};
         
         % Creates and image for display base on RGB wavelenghts
         rgb = [620,750; 495,570; 380,450];
@@ -240,7 +240,7 @@ switch ext;
         end
         
     otherwise; % Opens a traditional image file
-        obj.type = 'VIS|NIR';
+        obj.type = {'VIS','NIR'};
         obj.image = imread(obj.filename);
         obj.info = imfinfo(obj.filename);
         obj.display = obj.image;     

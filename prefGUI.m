@@ -171,7 +171,7 @@ function callback_select(hObject,~)
         'callback',{@callback_default,p,'clear'},'enable',enable);
 
 % Disable the preferences if the plugin is a different type than imObject     
-if ~isempty(imobj.type) && ~strcmpi(imobj.type,p.plugintype);
+if ~isempty(imobj.type) && sum(strcmpi(imobj.type,p.plugintype)) == 0;
     child = findobj(thepanel,'-property','enable');
     set(child,'enable','off');
 end

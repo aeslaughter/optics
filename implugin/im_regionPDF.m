@@ -3,12 +3,12 @@ function p = im_regionPDF(obj)
 
 % DEFINE THE MENUS
 p = imPlugin(obj,mfilename);
-p.plugintype = 'VIS|NIR';
+p.plugintype = {'VIS','NIR'};
 
 p.MenuOrder = 1;
 p.MenuParent = 'Analysis';
 Callback = @(hObject,eventdata) callback_compare(hObject,eventdata,obj,p);
-p.MenuOptions = {'Label','Show Region PDF(s)'};
+p.MenuOptions = {'Label','Calculate Region PDF(s)'};
 
 p.MenuSubmenu{1} = {'Label','White','callback',Callback};
 p.MenuSubmenu{2} = {'Label','Work','callback',Callback};
