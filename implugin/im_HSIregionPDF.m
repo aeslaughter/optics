@@ -67,5 +67,5 @@ function callback_compare(hObject,~,obj,p)
      
 % 3 - COMPARE THE REGIONS
     h = showDistribution(R,opt); 
-    p.addChild(h);
+    imObj.addChild(h);
     

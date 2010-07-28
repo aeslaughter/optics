@@ -136,51 +136,7 @@ methods
     function obj = clearDefaultPref(obj)
         rmpref('imPlugin',obj.plugin);
     end
-    
-    % ADDCHILD: keeps track of figures created using the plugin
-    function obj = addChild(obj,newChild)
-        obj.children = [obj.children,newChild];
-        idx = ishandle(obj.children);
-        obj.children = unique(obj.children(idx));
-    end
-    
-    % SAVEOBJ: saves any open figures as it is destroyed
-    function obj = saveobj(obj)
-        % Gather the figure handles, return if empty
-        h = obj.children(ishandle(obj.children));
-        
-        % Define the path for saving figures
-        pth = obj.parent.imObjectPath;
-        [~,fn,~] = fileparts(obj.parent.imObjectName);
-        figpath = [pth,filesep,'.',fn];
-        
-        % Remove existing directory, if present
-        if isempty(h); return; end
-        
-        % Create the direcotry
-        mkdir(figpath); 
-        fileattrib(figpath,'+h')
-
-        % Loop through the handles and save the .fig files
-        obj.figures = {};
-        for i = 1:length(h);
-            figname = [figpath,filesep,obj.plugin,'_',num2str(i),'.fig'];
-            hgsave(h(i),figname); 
-            obj.figures{i} = figname;
-            fileattrib(figname,'+h');
-        end
-    end
-end
-
-% DEFINE THE STATIC METHODS OF imPlugin CLASS
-methods (Static)
-    % LOADOBJ: opens any associated figures when being loaded
-    function obj = loadobj(obj)
-        for i = 1:length(obj.figures);
-           obj.children(i) = hgload(obj.figures{i}); 
-        end 
-    end
-end      
+end     
 end
 
 %--------------------------------------------------------------------------
