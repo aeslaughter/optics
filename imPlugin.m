@@ -96,8 +96,8 @@ methods
             obj.PushtoolOptions{:});
         
         % Set the enable setting
-        if ~isempty(obj.plugintype) && ~strcmpi(obj.parent.type,...
-                obj.plugintype)
+        if ~isempty(obj.plugintype) && sum(strcmpi(obj.parent.type,...
+                obj.plugintype)) == 0;
             set(mm,'enable','off');
         end
     end
@@ -155,22 +155,19 @@ methods
         figpath = [pth,filesep,'.',fn];
         
         % Remove existing directory, if present
-        if exist(figpath,'dir'); 
-            rmdir(figpath,'s'); 
-        end
         if isempty(h); return; end
         
         % Create the direcotry
         mkdir(figpath); 
-        fileattrib(figpath,'+h');
+        fileattrib(figpath,'+h')
 
         % Loop through the handles and save the .fig files
         obj.figures = {};
         for i = 1:length(h);
             figname = [figpath,filesep,obj.plugin,'_',num2str(i),'.fig'];
-            saveas(h(i),figname); 
-            fileattrib(figpath,'+h');
+            hgsave(h(i),figname); 
             obj.figures{i} = figname;
+            fileattrib(figname,'+h');
         end
     end
 end
@@ -180,7 +177,7 @@ methods (Static)
     % LOADOBJ: opens any associated figures when being loaded
     function obj = loadobj(obj)
         for i = 1:length(obj.figures);
-           obj.children(i) = open(obj.figures{i}); 
+           obj.children(i) = hgload(obj.figures{i}); 
         end 
     end
 end      
@@ -190,12 +187,12 @@ end
 function S = geticons
 % GETICIONS loads and compiles the *.ico files into a single structure
 
-    ico = dir(['icon',filesep,'\*.ico']); % Gather the files
+    ico = dir(['icon',filesep,'*.ico']); % Gather the files
     c = {}; fields = {}; % Intilize storage
     
     % Cylce through the files
     for i = 1:length(ico);
-        s = load(ico(i).name,'-mat');
+        s = load(['icon',filesep,ico(i).name],'-mat');
         f = fieldnames(s);
         d = struct2cell(s);
         c = [c;d];

@@ -155,6 +155,11 @@ methods
         tmp = {'display','image','info','imhandle','ovhandle'};
         for i = 1:length(tmp); obj.(tmp{i}) = []; end
               
+        % Remove . directory if it exits
+        [pth,fn] = fileparts(imFile);
+        dotdir = [pth,filesep,'.',fn];
+        if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
+        
         % Save the object
         save(imFile,'-mat','obj');
     
