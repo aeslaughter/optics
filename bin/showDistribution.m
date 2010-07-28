@@ -93,8 +93,7 @@ function h = showDistribution(R,varargin)
     
 % 5 - ENABLE THE FIGURE
     imObj.progress;
-    
-    
+       
 %--------------------------------------------------------------------------
 function L = HSIlabels(opt)
 % HSILABELS gets/builds labels for computation of HSI distributions
@@ -110,7 +109,6 @@ end
 for i = 1:size(W,1);
     L{i} = [num2str(W(i,1)),'-',num2str(W(i,2))];
 end
-
 
 %--------------------------------------------------------------------------
 function [f,xi,k,a] = computeHSI(R,opt,a,f,xi,k)

@@ -45,6 +45,8 @@ properties (SetAccess = private)
     plugins;  % Handles to the plugin object(s)
     ovhandle; % Handle of the overview window
     hprog;    % Handles for toggling imObject functionallity 
+    children; % Handles of figures to save
+    figures = {}; % List of figure names
 end
 
 % DEFINE THE DYNAMIC METHODS FOR THE imObject CLASS
@@ -160,11 +162,46 @@ methods
         dotdir = [pth,filesep,'.',fn];
         if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
         
-        % Save the object
+        % Save the object and the children
         save(imFile,'-mat','obj');
+        obj.saveChildren;
     
         % Restore the data
         for i = 1:length(tmp); obj.(tmp{i}) = S.(tmp{i}); end
+    end
+    
+    % ADDCHILD: keeps track of figures created using the plugin
+    function obj = addChild(obj,newChild)
+        obj.children = [obj.children,newChild];
+        idx = ishandle(obj.children);
+        obj.children = unique(obj.children(idx));
+    end
+    
+    % SAVEchildren: Saves children figures
+    function saveChildren(obj)
+        % Gather the figure handles, return if empty
+        h = obj.children(ishandle(obj.children));
+        
+        % Define the path for saving figures
+        pth = obj.imObjectPath;
+        [~,fn,~] = fileparts(obj.imObjectName);
+        figpath = [pth,filesep,'.',fn];
+        
+        % Remove existing directory, if present
+        if isempty(h); return; end
+        
+        % Create the direcotry
+        mkdir(figpath); 
+        fileattrib(figpath,'+h')
+
+        % Loop through the handles and save the .fig files
+        obj.figures = {};
+        for i = 1:length(h);
+            figname = [figpath,filesep,'figure_',num2str(i),'.fig'];
+            hgsave(h(i),figname); 
+            obj.figures{i} = figname;
+            fileattrib(figname,'+h');
+        end   
     end
     
     % PROGRESS: Toggles the funtionallity of the imObject on and off
@@ -190,7 +227,10 @@ methods
     
     % DELETE: operates when the imObject is being destroyed
     function delete(obj)
-       if ishandle(obj.imhandle); delete(obj.imhandle); end
+        for i = 1:length(obj.children);
+            if ishandle(obj.children(i)); delete(obj.children(i)); end
+        end
+        if ishandle(obj.imhandle); delete(obj.imhandle); end
     end
 end % end dynamic methods
 
@@ -210,11 +250,18 @@ methods (Static)
             obj.work(i).createregion('load');
             obj.work(i).addlabel(obj.work(i).label);
         end
+        
         % Restore white regions
         for i = 1:length(obj.white);
             obj.white(i).createregion('load');
             obj.white(i).addlabel(obj.white(i).label);
         end
+        
+        % Open the figures
+        for i = 1:length(obj.figures);
+           obj.children(i) = hgload(obj.figures{i}); 
+        end 
+
     end
 end % ends static methods
 end % ends the main classdef

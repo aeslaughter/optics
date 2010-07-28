@@ -80,7 +80,7 @@ if isempty(fig) || ~ishandle(fig);
     % Setup the handle for the live view line
     hL = findobj(ax,'Type','Line');
     set(hL,'Tag','LiveLine','Visible','off');
-    p.addChild(fig); % Adds the figure for saving
+    imObj.addChild(fig); % Adds the figure for saving
     
     % Enable figure
     imObj.progress;
