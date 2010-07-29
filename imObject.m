@@ -139,6 +139,12 @@ methods
         imFile = gatherfile('put','LastUsedimObjectDir',spec,imFile);
         if isempty(imFile); return; end 
  
+        % Disable the figure
+        obj.progress;
+        
+        % Make sure units are normalized
+        set(imgcf,'Units','normalized');
+        
         % Update the imtool name
         [~,imF,imE] = fileparts(obj.filename);  
         [P,F,E] = fileparts(imFile);
@@ -163,11 +169,14 @@ methods
         if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
         
         % Save the object and the children
-        save(imFile,'-mat','obj');
         obj.saveChildren;
-    
+        save(imFile,'-mat','obj');
+        
         % Restore the data
         for i = 1:length(tmp); obj.(tmp{i}) = S.(tmp{i}); end
+        
+        % Enable the figure
+        obj.progress;
     end
     
     % ADDCHILD: keeps track of figures created using the plugin
@@ -325,7 +334,7 @@ im = uimenu(h,'Label','imObject'); % The Regions menu
         @(src,event)saveimObject(obj,obj.imObjectPath,...
         obj.imObjectName));
     uimenu(im,'Label','imObject Save as...','callback',...
-        @(src,event)saveimObject(obj,''));
+        @(src,event)saveimObject(obj,'',''));
     uimenu(im,'Label','Open Overview','separator','on','Checked',...
         obj.overview,'callback',@callback_overview);
     uimenu(im,'Label','Plugin Preferences','separator','on',...

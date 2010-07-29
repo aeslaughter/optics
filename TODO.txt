@@ -1,4 +1,8 @@
 TODO:
-1. Fix/test saving of imObject with live view figure
-2. Add comments to im_HSIlive.m
-3. Build plugin for region HSI spectrum(s) w/ confidence
+1. Build plugin for region HSI spectrum(s) w/ confidence
+
+2. When loading the following is given:
+Warning: Input for icon image Cdata was not recognized 
+> In imPlugin>imPlugin.set.PushtoolCdata at 118
+
+3. build a class for impoints created when using HSI live view

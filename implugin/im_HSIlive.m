@@ -51,7 +51,7 @@ end
 B = get(h.LiveButton,'State');
 if strcmpi(B,'off'); 
     set(imgcf,'WindowButtonMotionFcn','', 'WindowButtonDownFcn','',...
-        'Pointer','arrow');
+        'Pointer','arrow','Units','Normalized');
     return;
 end
 
@@ -130,42 +130,53 @@ end
 function addPoint(p,x,y)
 % ADDPOINT when the mouse is clicked a point is added to the graph
 
+% Gather the necessary handles
 fig = findobj('Name','Live Spectrum');
-
 hfig = guihandles(fig);
 ax = get(hfig.LiveLine,'Parent');
 
+% Get the X and Y data from the current location
 X = get(hfig.LiveLine,'Xdata');
 Y = get(hfig.LiveLine,'Ydata');
 label = ['X=',num2str(x),',Y=',num2str(y)];
 
+% Plot the line and assign the XYscatter callback to the new line
 fcn = get(hfig.LiveLine,'ButtonDownFcn');
 cline = plot(ax,X,Y,'DisplayName',label,'ButtonDownFcn',fcn);
 
+% Update that legend
 hline = findobj(ax,'Type','Line');
 M = get(hline,'DisplayName');
 legend(hline,M);
 
+% Add a point in the image
 C = get(cline,'Color');
 hp = impoint(imgca,y,x);
 hp.setColor(C);
 
+% Set the position of the impoint
 fcn = makeConstrainToRectFcn('impoint',[y,y],[x,x]);
 hp.setPositionConstraintFcn(fcn); 
 
+% Update the label, if desired
 if p.Pref(3).Value;
     hp(end).setString(label);
 end
 
+% Store the handles to the impoints
 points = get(fig,'UserData');
 set(fig,'UserData',[{hp},points]);
 
 %--------------------------------------------------------------------------
 function callback_deleteFig(hObject,~)
+% CALLBACK_DELETEFIG is called when the Live Spectrum window is deleted
 
+% Remove the impoint objects
 hp = get(hObject,'UserData');
 for i = 1:length(hp); delete(hp{i}); end
-delete(hObject)
+
+% Delete the figure
+delete(hObject);
 
 
 
