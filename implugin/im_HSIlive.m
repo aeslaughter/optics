@@ -73,6 +73,12 @@ if isempty(fig) || ~ishandle(fig);
     % Graph a profile
     X = imObj.info.wavelength;
     Y = squeeze(imObj.image(1,1,:));
+    
+    % Normalize the spectrum
+    if imObj.workNorm && ~isempty(imObj.norm);
+       Y = Y ./ imObj.norm; 
+    end
+    
     [fig,ax] = XYscatter(X,Y,'advanced',a);
     set(fig,'NextPlot','add','UserData',{},'CloseRequestFcn',...
         @callback_deleteFig);
