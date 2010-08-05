@@ -36,6 +36,7 @@ properties % Public properties
     
     % Set general imObject options (a value must be assigned)
     workNorm = true;
+    spectralon = true;
 end 
    
 % DEFINE THE PRIVIATE PROPERTIES OF THE imObject CLASS
@@ -119,7 +120,16 @@ methods
         end
 
         % Update the normalization property
-        obj.norm = mean(theNorm,1);
+        obj.norm = mean(theNorm,1); obj.norm
+        
+        % Apply HSI spectralon reference, if desired
+        if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
+            data = dlmread('teflon.txt');
+            yi = interp1(data(:,1),data(:,2),...
+                obj.info.wavelength,'spline','extrap');
+            obj.norm = obj.norm.*yi';
+            obj.norm
+        end
         
         % Update the work regions
         R = obj.work;
