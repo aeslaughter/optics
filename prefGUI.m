@@ -62,8 +62,18 @@ for i = 1:length(c);
             val = strfind(str,imObj.(tag));
             set(c(i),'Value',val);
     end
+    
+    % Update the enable/disable
+%     user = get(c(i),'UserData');
+%     if ~isempty(imObj.type) && sum(strcmpi(imObj.type,user)) == 0;
+%         set(c(i),'enable','off');
+%     end
+%     
 end
     
+
+
+
 %--------------------------------------------------------------------------
 function output = callback_general(hObject,~)
 % APPLYGENERALOPTIONS sets the imObjects general options

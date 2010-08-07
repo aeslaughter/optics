@@ -1,6 +1,15 @@
 TODO:
-1. When loading the following is given:
+1. Continue working on optics object
+    a. Update the GUI with labels and make it more compact
+    b. Add file opening method that saves the imObjects created
+    c. Add active regions and auto update the control GUI when an imObject is changed
+    d. Create methods for saving/loading workspace
+    e. Create file menu 
+    f. Develop plugins
+    g. optics object preferences
+
+2. When loading the following is given:
 Warning: Input for icon image Cdata was not recognized 
 > In imPlugin>imPlugin.set.PushtoolCdata at 118
 
-2. imRegion needs a impoint capability, for use with HSI live view
+3. imRegion needs a impoint capability, for use with HSI live view
