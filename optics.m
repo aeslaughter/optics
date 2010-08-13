@@ -9,15 +9,19 @@ properties
     type;
     angle;
     thepath;
+    keeplocal = true;
+    target = 'database';
+    position;
 end
 
-% DEFINE THE PRIVE PROPERTIES
+% DEFINE THE PRIVATE PROPERTIES
 properties (SetAccess = private)
     host = 'caesar.ce.montana.edu';
     username = 'anonymous';
     password = 'snowoptics';
-    thedir = 'pub/snow/optics';
+    thedir = '/pub/snow/optics';
     extensions = {'.jpg','.bip'};
+    handles = imObject.empty;
 end
 
 
@@ -45,7 +49,6 @@ methods
         for i = 1:length(data);
             [~,~,e] = fileparts(data(i).name);
             if sum(strcmpi(e,obj.extensions)) == 1
-                data(i).name
                 list{k} = data(i).name;
                 k = k + 1;
             end
@@ -58,10 +61,37 @@ methods
         end
     end
     
+    function obj = openImages(obj)
+       h = guihandles(obj.fig);
+        str = get(h.images,'String');
+        files = str(get(h.images,'Value'));
+        
+
+        
+        cd(obj.FTP,obj.thepath);
+        localpath = regexprep(obj.thepath,'/',filesep);
+        localpath = [obj.target,filesep,localpath]
+        
+        if ~exist(localpath,'dir');
+            mkdir(localpath);
+        end
+        
+        for i = 1:length(files);
+            filename = [localpath,filesep,files{i}];
+            if ~exist(filename,'file');
+                mget(obj.FTP,files{i},localpath);
+            end
+            obj.handles(end+1) = imObject(filename);  
+        end
+        cd(obj.FTP,obj.thedir);
+        
+        idx = isvalid(obj.handles);
+        obj.handles = obj.handles(idx);
+    end
+    
     function closeOptics(obj)
         close(obj.FTP);
         delete(obj.fig);
-        
     end
         
 end
@@ -82,6 +112,7 @@ set(h.folder,'Callback',@callback_folder,'Value',1);
 set(h.type,'Callback',@callback_type,'Value',1);
 set([h.angles,h.zenith,h.viewer,h.azimuth],'Callback',@callback_angle,...
     'Value',1);
+set(h.openimages,'Callback',@(src,event)openImages(obj));
 
 callback_exp(h.exp,[]);
 
@@ -210,7 +241,6 @@ for i = 2:length(varargin);
        thepath = [thepath,'/',varargin{i}]; 
     end
 end
-
 end
 
 

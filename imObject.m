@@ -339,7 +339,8 @@ if ~isempty(obj.imObjectName);
     [~,f,e] = fileparts(obj.imObjectName);
     name = [f,e,' (',obj.filename,')'];
 else
-    name = obj.filename;
+    [~,f,e] = fileparts(obj.filename);
+    name = [f,e];
 end
 
 h = imtool(obj.display); 

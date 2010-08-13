@@ -13,7 +13,6 @@ p.MenuOptions = {'Label','Calculate Region PDF(s)'};
 p.MenuSubmenu{1} = {'Label','White','callback',Callback};
 p.MenuSubmenu{2} = {'Label','Work','callback',Callback};
 
-
 % DEFINE THE PLUGIN PREFERENCES
 p.Pref(1).Value = '280,750; 750,3000';
 p.Pref(1).Label = 'Wavelength Bands';
@@ -35,7 +34,7 @@ p.Pref(6).Value = '3';
 p.Pref(6).Label = 'Figure Height (in)';
 
 %--------------------------------------------------------------------------
-function callback_compare(hObject,~,obj,p)
+function callback_compare(hObject,~,~,p)
 % CALLBACK_COMPARE
 
 % 1 - GATHER THE REGIONS

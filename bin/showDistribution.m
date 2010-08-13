@@ -48,7 +48,8 @@ function h = showDistribution(R,varargin)
             for j = 1:size(r,3);
                 data = r(:,:,j);
                 X = reshape(data,numel(data),1);
-                a.legend{k} = [R(i).parent.filename,':',R(i).type,':',...
+                [~,fname,ext] = fileparts(R(i).parent.filename);
+                a.legend{k} = [fname,ext,':',R(i).type,':',...
                     R(i).label,'(',rgb{j},')'];
                   [f(:,k),xi(:,k)] = ksdensity(X,'kernel',opt.kernel,...
                     'npoints',opt.npoints);
@@ -64,7 +65,8 @@ function h = showDistribution(R,varargin)
         else
             data = mean(r,3); 
             X = reshape(data,numel(data),1);
-            a.legend{i} = [R(i).parent.filename,':',R(i).type,':',...
+            [~,fname,ext] = fileparts(R(i).parent.filename);
+            a.legend{i} = [fname,ext,':',R(i).type,':',...
                 R(i).label];
             [f(:,i),xi(:,i)] = ksdensity(X,'kernel',opt.kernel,...
                 'npoints',opt.npoints);

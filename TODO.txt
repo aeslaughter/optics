@@ -1,11 +1,15 @@
 TODO:
 1. Continue working on optics object
-    a. Update the GUI with labels and make it more compact
-    d. Create methods for saving/loading workspace
-    e. Create file menu 
+    a. Create methods for saving/loading workspace
+    b. Add optics preferences w/ load/save default
+        i. Keep local copies
+        ii. Change local directory
 
 2. When loading the following is given:
 Warning: Input for icon image Cdata was not recognized 
 > In imPlugin>imPlugin.set.PushtoolCdata at 118
 
 3. imRegion needs a impoint capability, for use with HSI live view
+
+4. Add/complete a view info option to the imObject menu
+
