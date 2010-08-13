@@ -85,7 +85,7 @@ function h = showDistribution(R,varargin)
     a.interpreter = 'none';
     a.tight = 'on';
     a.fontname = 'times'; a.fontsize = 9;
-    a.location = 'best';
+%     a.location = 'best';
     a.size = [opt.width,opt.height];
 
     % 4.3 - Produce the graph

@@ -1,4 +1,4 @@
-function p = im_HSIlive(obj)
+function p = HSIlive(obj)
 % IM_REGIONPDF is a imObject plugin for computing EPDFS of image regions
 
 % 1 - DEFINE THE PLUGIN AND CALLBACK

@@ -1,4 +1,4 @@
-function p = im_HSIspectrum(obj)
+function p = HSIspectrum(obj)
 % IM_REGIONPDF is a imObject plugin for computing EPDFS of image regions
 
 % 1 - DEFINE THE PLUGIN AND CALLBACK
@@ -33,14 +33,13 @@ p.Pref(4).Label = 'Figure Width (in)';
 p.Pref(5).Value = '3';
 p.Pref(5).Label = 'Figure Height (in)';
 
-
 %--------------------------------------------------------------------------
 function callback_spec(hObject,~,p)
 
 % 1 - GATHER THE REGIONS
     imObj = guidata(hObject);
     type = lower(get(hObject,'Label'));
-    R = imObj.(type);
+    R = gatherRegions(type,imObj);
     if isempty(R); 
         mes = ['At least one "',type,'" region must exist!'];
         warndlg(mes,'Warning!');

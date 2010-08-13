@@ -1,4 +1,4 @@
-function p = im_regionPDF(obj)
+function p = regionPDF(obj)
 % IM_REGIONPDF is a imObject plugin for computing EPDFS of image regions
 
 % DEFINE THE MENUS
@@ -38,7 +38,7 @@ function callback_compare(hObject,~,obj,p)
 % 1 - GATHER THE REGIONS
     imObj = guidata(hObject);
     type = lower(get(hObject,'Label'));
-    R = obj.(type);
+    R = gatherRegions(type,obj);
     if isempty(R); 
         mes = ['At least one "',type,'" region must exist!'];
         warndlg(mes,'Warning!');
