@@ -1,4 +1,4 @@
-function p = im_HSIregionPDF(obj)
+function p = HSIregionPDF(obj)
 % IM_REGIONPDF is a imObject plugin for computing EPDFS of image regions
 
 % DEFINE THE MENUS
@@ -39,9 +39,12 @@ function callback_compare(hObject,~,obj,p)
 % CALLBACK_COMPARE
 
 % 1 - GATHER THE REGIONS
+    % Gather current object and desired type
     imObj = guidata(hObject);
     type = lower(get(hObject,'Label'));
-    R = obj.(type);
+    
+    % Gather the desired regions, across images if desired
+    R = gatherRegions(type,imObj);
     if isempty(R); 
         mes = ['At least one "',type,'" region must exist!'];
         warndlg(mes,'Warning!');

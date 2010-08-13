@@ -37,6 +37,7 @@ properties % Public properties
     % Set general imObject options (a value must be assigned)
     workNorm = true;
     spectralon = true;
+    regionPrompt = true;
 end 
    
 % DEFINE THE PRIVIATE PROPERTIES OF THE imObject CLASS
@@ -68,6 +69,9 @@ methods
 
         % Setup up the overview window
         if strcmpi(obj.overview,'on'); obj.openOverview; end
+        
+        % Add handle to the root user data
+        obj.addRoot;
     end
     
     % OPENOVERVIEW: opens the overview window
@@ -128,7 +132,6 @@ methods
             yi = interp1(data(:,1),data(:,2),...
                 obj.info.wavelength,'spline','extrap');
             obj.norm = obj.norm.*yi';
-            obj.norm
         end
         
         % Update the work regions
@@ -244,12 +247,26 @@ methods
         obj.calcNorm;        
     end
     
+    % ADDROOT: Adds the created imObject to an array of handles
+    function obj = addRoot(obj)
+        H = get(0,'UserData');
+        if isempty(H);
+            H = obj;
+        else
+            H(end+1) = obj;
+        end
+        idx = isvalid(H);
+        set(0,'UserData',H(idx));
+    end
+    
     % DELETE: operates when the imObject is being destroyed
     function delete(obj)
         for i = 1:length(obj.children);
             if ishandle(obj.children(i)); delete(obj.children(i)); end
         end
         if ishandle(obj.imhandle); delete(obj.imhandle); end
+        delete(obj.work);
+        delete(obj.white);
     end
 end % end dynamic methods
 
@@ -390,7 +407,7 @@ function plugin = addplugins(obj)
 % LOCATE THE M-FILES IN PLUGIN DIRECTORY
 pth = [cd,filesep,'imPlugin',filesep];           
 addpath(pth); 
-f = dir([pth,'im*.m']);
+f = dir([pth,'*.m']);
 
 % EVALUATE ALL M-FILES IN PLUGINS DIRECTORY 
 % (use if it returns imPlugin object)
@@ -473,8 +490,7 @@ function callback_closefcn(hObject,~)
     for i = 1:length(figs); 
         if ishandle(figs(i)); delete(figs(i)); end; 
     end
-    delete(obj.plugins);
-    delete(obj);
+    delete(obj.plugins); 
     cur = findobj('Name','Plugin Preferences'); delete(cur);
-    close(imgcf);
+    delete(obj);
 end
