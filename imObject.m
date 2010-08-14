@@ -184,7 +184,7 @@ methods
     end
     
     % SAVEOBJ: operates with the imObject is being saved
-    function obj = saveobj(obj);
+    function obj = saveobj(obj)
         % Update the positions
         set(obj.imhandle,'Units','normalized');
         obj.imposition = get(obj.imhandle,'position');
@@ -195,8 +195,7 @@ methods
         % Saves the imObjects children figures
         obj.saveChildren;       
     end
-    
-    
+        
     % ADDCHILD: keeps track of figures created using the plugin
     function obj = addChild(obj,newChild)
         obj.children = [obj.children,newChild];

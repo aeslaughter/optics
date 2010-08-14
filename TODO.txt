@@ -2,10 +2,10 @@ TODO:
 1. Continue working on optics object
     a. Complete methods for saving/loading workspace
         i. Children figs are being saved twice???
-        ii. Set folders on loading of workspace
     b. Add optics preferences w/ load/save default
         i. Keep local copies
         ii. Change local directory
+        iii. Append exiting workspace
 
 2. When loading the following is given:
     Warning: Input for icon image Cdata was not recognized 
