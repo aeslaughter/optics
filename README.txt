@@ -5,6 +5,6 @@ developed for the study of the Bidirectional Reflectance Distribution Function (
 This toolbox was developed by Andrew E. Slaughter at Montana State University.
 
 Installation:
-To install the software (1) unzip the file SnowOptics.zip in a folder of your choice, (2) open MATLAB, 
+To install the software (1) download and unzip the file SnowOptics_vX.X.zip in a folder of your choice, (2) open MATLAB, 
 (3), change MATLAB's the current folder to the directory where the files were unziped, and (4) see the 
 help.pdf file for a tutorial and complete documentation.

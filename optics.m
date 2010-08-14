@@ -29,19 +29,19 @@ properties (SetAccess = private)
     thedir = '/pub/snow/optics';
     extensions = {'.jpg','.bip','.bil'}; % File extensions to allow
     handles = imObject.empty; % Initilize the imObject handles
-    hprog; % Handles for toggling imObject functionallity 
 end
 
 % DEFINE THE METHODS
 methods
     % OPTICS: operates on creation of optics object
     function obj = optics
+        addpath('bin');
         obj.fig = open('controlGUI.fig'); % Opens the GUI
         obj.startup; % Initlizes the optics class
     end
     
     % STARTUP: initilizes the optics class
-    function obj = startup(obj);
+    function obj = startup(obj)
        % Connect to the ftp site
        try
             obj.FTP = ftp(obj.host,obj.username,obj.password);
@@ -114,7 +114,7 @@ methods
     
     % SAVEWORKSPACE: operates to save the current workspace
     function saveWS(obj,thepath,thefile)
-                % Determine the file to save
+        % Determine the file to save
         filename = fullfile(thepath,thefile);
         spec = {'*.sws','MATLAB snow optics workspace (*.sws)'};
         filename = gatherfile('put','LastUsedWorkSpaceDir',spec,filename);
@@ -161,44 +161,36 @@ methods
     end
     
     % LOADWS: operates when loading a workspace
-    function obj = loadWS(obj);
+    function obj = loadWS(obj)
         % Load the *.sws file
         spec = {'*.sws','MATLAB snow optics workspace (*.sws)'};
         filename = gatherfile('get','LastUsedWorkSpaceDir',spec);
-        newObj = load(filename,'-mat'); newObj = newObj.obj;
+        oldObj = obj;
+        tmp = load(filename,'-mat'); obj = tmp.obj;
             
         % Update the handles structure
         if obj.appendWorkspace % adds workspace to existing
-            obj.handles = [obj.handles,newObj.handles];
+            obj.handles = [oldObj.handles,obj.handles];
             idx = isvalid(obj.handles);
             obj.handles = obj.handles(idx);
             
         else % removes existing images
             idx = isvalid(obj.handles);
             delete(obj.handles(idx));
-            obj.handles = newObj.handles;
             set(obj.fig,'Units','normalized','Position',newObj.position);
         end
         
         % Update the workspace file information and update the folders
-        obj.opticsPath = newObj.opticsPath;
-        obj.opticsFile = newObj.opticsFile;
-        obj.updateFolders;
+        %obj.updateFolders;
     end
-    
-    % UPDATEFOLDERS: updates the GUI folder structure
-    function obj = updateFolders(obj)
-        
-       disp('Update the folder structure.'); 
-    end
-    
+       
     % CLOSEOPTICS: operates when the GUI is being closed
     function closeOptics(obj)
         % Close the ftp connection
         close(obj.FTP);
         
         % Delete the imObjects
-        idx = isvalid(obj.handles)
+        idx = isvalid(obj.handles);
         obj.handles = obj.handles(idx);
         for i = 1:length(obj.handles);
             delete(obj.handles(i));
@@ -257,11 +249,11 @@ set(h.WSsaveas,'callback',@(src,event)saveWS(obj,'',''));
 set(h.WSopen,'callback',@(src,event)loadWS(obj));
    
 % Intilize the GUI by calling the experiment folder callback
-callback_exp(h.exp,[]);
+callback_exp(h.exp,[],'init');
 end
 
 %--------------------------------------------------------------------------
-function callback_exp(hObject,~)
+function callback_exp(hObject,~,varargin)
 % CALLBACK_EXP operates when the user selects an experiment
 
 % Gather the optics object and GUI handles
@@ -273,13 +265,16 @@ data = struct2cell(dir(obj.FTP));
 str = data(1,:);
 set(hObject,'String',str);
 
-% Update the optics object properties and move to the next folder level
-obj.exp = str{get(hObject,'Value')};
-callback_folder(h.folder,[]);
+% Setup the folder structure, varagin{1} = 'init' uses the saved value
+val = initFolder(hObject,obj.exp,varargin{:});
+obj.exp = str{val};
+
+% Move to the next folder level
+callback_folder(h.folder,[],varargin{:});
 end
 
 %--------------------------------------------------------------------------
-function callback_folder(hObject,~)
+function callback_folder(hObject,~,varargin)
 % CALLBACK_FOLDER operates when the user selects a folder
 
 % Gather the optics object and GUI handles
@@ -292,13 +287,16 @@ idx = cell2mat(data(3,:)); % Only considers folders
 str = data(1,idx);
 set(hObject,'String',str);
 
-% Update the optics object properties and move to the next folder level
-obj.folder = str{get(hObject,'Value')};
-callback_type(h.type,[]);
+% Setup the folder structure, varagin{1} = 'init' uses the saved value
+val = initFolder(hObject,obj.folder,varargin{:});
+obj.folder = str{val};   
+
+% Move to the next folder level
+callback_type(h.type,[],varargin{:});
 end
 
 %--------------------------------------------------------------------------
-function callback_type(hObject,~)
+function callback_type(hObject,~,varargin)
 % CALLBACK_TYPE operates when the user selects a type
 
 % Gather the optics object
@@ -311,54 +309,67 @@ idx = cell2mat(data(3,:)); % Only considers folders
 str = data(1,idx);
 set(hObject,'String',str);
 
-% Update the optics object properties and move to the next folder level
-obj.type = str{get(hObject,'Value')};
-callback_angle(hObject,[]);
+% Setup the folder structure, varagin{1} = 'init' uses the saved value
+val = initFolder(hObject,obj.type,varargin{:});
+obj.type = str{val};   
+
+% Move to the next folder level
+callback_angle(hObject,[],varargin{:});
 end
 
 %--------------------------------------------------------------------------
-function callback_angle(hObject,~)
+function callback_angle(hObject,~,varargin)
 % CALLBACK_ANGLE operates when angle panel is changed or toggled
 
 % Gather the optics object and GUI handles
 obj = guidata(hObject);
 h = guihandles(hObject);
+hangles = [h.zenith,h.viewer,h.azimuth];
 
 % Gather files from current directory if toggle is 'off'
 value = get(h.angles,'Value');
-if ~value
-    set([h.zenith,h.viewer,h.azimuth],'enable','off');
+if ~value; % case when 'off' (ignores angle directory)
+    set(hangles,'enable','off');
     obj.thepath = buildpath(obj.exp,obj.folder,obj.type); 
     obj.angle = '';
     obj.getFiles;
-else
-    set([h.zenith,h.viewer,h.azimuth],'enable','on');
-    obj.angle = getAngleFolder(h,obj);
+else % case when 'on' (uses angle directory)
+    set(hangles,'enable','on');
+    obj.angle = getAngleFolder(h,obj,varargin{:});
     obj.thepath = buildpath(obj.exp,obj.folder,obj.type,obj.angle); 
     obj.getFiles;
 end
+
 end
 
 %--------------------------------------------------------------------------
-function angle = getAngleFolder(h,obj)
+function angle = getAngleFolder(h,obj,varargin)
 % GETANGLEFOLDER gathers the angle, viewer, zintth folder    
     
 % Gather the current path based on selected folders
 thepath = buildpath(obj.exp,obj.folder,obj.type);
+
+% Gather exiting angles
+if ~isempty(obj.angle);
+   z = obj.angle(2:3);
+   v = obj.angle(5:6);
+   a = obj.angle(end);
+end
 
 % Define the available zenith angles
 data = struct2cell(dir(obj.FTP,[thepath,'/Z*']));
 str = char(data(1,:));
 Z = unique(cellstr(str(:,2:3)));
 set(h.zenith,'String',Z);
-z = Z{get(h.zenith,'Value')};
+val = initFolder(h.zenith,z,varargin{:});
+z = Z{val};
 
 % Define the available viewer angles
 data = struct2cell(dir(obj.FTP,[thepath,'/Z',z,'*']));
 str = char(data(1,:));
 V = unique(cellstr(str(:,5:6)));
 set(h.viewer,'String',V);
-val = get(h.viewer,'Value');
+val = initFolder(h.viewer,v,varargin{:});
 if length(V) < val; set(h.viewer,'Value',1); end
 v = V{get(h.viewer,'Value')};
 
@@ -367,7 +378,7 @@ data = struct2cell(dir(obj.FTP,[thepath,'/Z',z,'V',v,'*']));
 str = char(data(1,:)); 
 A = unique(cellstr(str(:,7)));
 set(h.azimuth,'String',A);
-val = get(h.azimuth,'Value');
+val = initFolder(h.azimuth,a,varargin{:});
 if length(A) < val; set(h.azimuth,'Value',1); end
 a = A{get(h.azimuth,'Value')};
 
@@ -387,6 +398,14 @@ for i = 2:length(varargin);
 end
 end
 
-
-
-
+%--------------------------------------------------------------------------
+function val = initFolder(hObject,str,varargin)
+    strarray = get(hObject,'String');
+    if ~isempty(varargin) && strcmpi(varargin{1},'init') && ~isempty(str);
+        val = strmatch(str,strarray);
+        if isempty(val); val = get(hObject,'Value'); end
+    else
+        val = get(hObject,'Value');
+    end
+    set(hObject,'Value',val) ;
+end

@@ -36,10 +36,15 @@ if isempty(varargin) || isempty(varargin{1}); % Case w/o filename set
 elseif strcmpi(type,'get');
     filename = varargin{1};
     if ~exist(filename,'file'); 
-        error('IMOBJECT:openimage','File does not exist.'); 
+        error('gatherfile.m','File does not exist.'); 
     end  
 
 % RETURN THE FILENAME ("put" with a user provided file)
 else
     filename = varargin{1};
+    if exist(filename,'file');
+        ans = questdlg('Overwrite exiting workspace?','Overwrite...',...
+            'Yes','Cancel','Cancel');
+        if strcmpi(ans,'cancel'); filename = []; end
+    end
 end
