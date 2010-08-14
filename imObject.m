@@ -57,6 +57,7 @@ methods
     function obj = imObject(varargin)
         addpath('imPlugin','bin');
         obj = openimage(obj,varargin{:});
+        if isempty(obj.filename); return; end;
         obj.startup;
     end
 
@@ -155,22 +156,13 @@ methods
         % Disable the figure
         obj.progress;
         
-        % Make sure units are normalized
-        set(imgcf,'Units','normalized');
-        
         % Update the imtool name
         [~,imF,imE] = fileparts(obj.filename);  
         [P,F,E] = fileparts(imFile);
         obj.imObjectName = [F,E];
         obj.imObjectPath = P;
         set(imgcf,'Name',[F,E,' (',imF,imE,')']);
-        
-        % Update the positions
-        obj.imposition = get(obj.imhandle,'position');
-        if ishandle(obj.ovhandle);
-            obj.ovposition = get(obj.ovhandle,'position');
-        end
-        
+
         % Copy the object and remove extenous data
         S = struct(obj);
         tmp = {'display','image','info','imhandle','ovhandle'};
@@ -182,7 +174,6 @@ methods
         if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
         
         % Save the object and the children
-        obj.saveChildren;
         save(imFile,'-mat','obj');
         
         % Restore the data
@@ -191,6 +182,20 @@ methods
         % Enable the figure
         obj.progress;
     end
+    
+    % SAVEOBJ: operates with the imObject is being saved
+    function obj = saveobj(obj);
+        % Update the positions
+        set(obj.imhandle,'Units','normalized');
+        obj.imposition = get(obj.imhandle,'position');
+        if ishandle(obj.ovhandle);
+            obj.ovposition = get(obj.ovhandle,'position');
+        end
+        
+        % Saves the imObjects children figures
+        obj.saveChildren;       
+    end
+    
     
     % ADDCHILD: keeps track of figures created using the plugin
     function obj = addChild(obj,newChild)
@@ -203,15 +208,13 @@ methods
     function saveChildren(obj)
         % Gather the figure handles, return if empty
         h = obj.children(ishandle(obj.children));
+        if isempty(h); return; end
         
         % Define the path for saving figures
         pth = obj.imObjectPath;
         [~,fn,~] = fileparts(obj.imObjectName);
         figpath = [pth,filesep,'.',fn];
-        
-        % Remove existing directory, if present
-        if isempty(h); return; end
-        
+               
         % Create the direcotry
         mkdir(figpath); 
         fileattrib(figpath,'+h')
@@ -219,7 +222,7 @@ methods
         % Loop through the handles and save the .fig files
         obj.figures = {};
         for i = 1:length(h);
-            figname = [figpath,filesep,'figure_',num2str(i),'.fig'];
+            figname = [figpath,filesep,randstr(18),'.fig'];
             hgsave(h(i),figname); 
             obj.figures{i} = figname;
             fileattrib(figname,'+h');
@@ -307,8 +310,10 @@ function obj = openimage(obj,varargin)
 % OPENIMAGE opens the desired image upon creation/loading of imObject class
 
 % SET/GATHER THE IMAGE FILENAME
-spec = {'*.bip','HSI Image (*.bip)'; '*.jpg','JPEG Image (*.jpg)'};
+spec = {'*.bip;*.bil','HSI Image (*.bip,*.bil)';...
+    '*.jpg','JPEG Image (*.jpg)'};
 obj.filename = gatherfile('get','LastUsedDir',spec,varargin{:});
+if isempty(obj.filename); return; end
 
 % OPEN THE IMAGE
 [~,~,ext] = fileparts(obj.filename);   

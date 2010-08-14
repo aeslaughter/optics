@@ -8,7 +8,7 @@ function r = gatherRegions(type,currentObj)
 % 1 - COLLECT THE AVAILBLE IMOBJECTS FROM THE ROOT USER DATA
 h = get(0,'UserData');
 idx = isvalid(h);
-H = h(idx)
+H = h(idx);
 
 % 2 - RETURN THE CURRENT IMOBJECT REGIONS IF PROMPT IS NOT DESIRED
 if ~currentObj.regionPrompt;
