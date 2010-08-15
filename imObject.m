@@ -309,8 +309,8 @@ function obj = openimage(obj,varargin)
 % OPENIMAGE opens the desired image upon creation/loading of imObject class
 
 % SET/GATHER THE IMAGE FILENAME
-spec = {'*.bip;*.bil','HSI Image (*.bip,*.bil)';...
-    '*.jpg','JPEG Image (*.jpg)'};
+spec = {'*.jpg','JPEG Image (*.jpg)';...
+    '*.bip;*.bil','HSI Image (*.bip,*.bil)'};
 obj.filename = gatherfile('get','LastUsedDir',spec,varargin{:});
 if isempty(obj.filename); return; end
 
@@ -361,6 +361,7 @@ function createtools(obj)
 
 % DEFINE THE imObject MENU
 h = obj.imhandle; % imtool handle
+[~,fn,ext] = fileparts(obj.filename);
 im = uimenu(h,'Label','imObject'); % The Regions menu
     uimenu(im,'Label','imObject Save','callback',...
         @(src,event)saveimObject(obj,obj.imObjectPath,...
@@ -369,6 +370,8 @@ im = uimenu(h,'Label','imObject'); % The Regions menu
         @(src,event)saveimObject(obj,'',''));
     uimenu(im,'Label','Open Overview','separator','on','Checked',...
         obj.overview,'callback',@callback_overview);
+    uimenu(im,'Label','View Image Information','separator','on',...
+        'callback',@(src,event)viewStructure(obj.info,[fn,ext]));
     uimenu(im,'Label','Plugin Preferences','separator','on',...
         'callback',@(src,event)pluginpref(obj));    
 

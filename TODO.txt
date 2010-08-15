@@ -13,9 +13,7 @@ TODO:
 
 3. imRegion needs a impoint capability, for use with HSI live view
 
-4. Add/complete a view info option to the imObject menu
+4. Add capability to read .bil files
 
-5. Add capability to read .bil files
-
-6. Debug Control GUI folder selecting, missing files and such...
+5. Debug Control GUI folder selecting, missing files and such...
 
