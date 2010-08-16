@@ -2,10 +2,6 @@ TODO:
 1. Continue working on optics object
     a. Complete methods for saving/loading workspace
         i. Children figs are being saved twice???
-    b. Add optics preferences w/ load/save default
-        i. Keep local copies
-        ii. Change local directory
-        iii. Append exiting workspace
 
 2. When loading the following is given:
     Warning: Input for icon image Cdata was not recognized 
@@ -16,4 +12,8 @@ TODO:
 4. Add capability to read .bil files
 
 5. Debug Control GUI folder selecting, missing files and such...
+
+6. Complete m-file documentation
+
+7. Complete LaTeX documentation
 

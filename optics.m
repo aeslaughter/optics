@@ -16,9 +16,10 @@ properties
     opticsFile = ''; % Filename of saved workspace (*.sws)
     
     % Define the user preferences
+    pref = {'keeplocal','appendWorkspace','target'}; % List of option props
     keeplocal = true;           % Toggle for saving/removing local files
-    target = 'database';        % The location of the image database
     appendWorkspace = true;     % Toggle for clearing exiting files 
+    target = 'database';        % The location of the image database
 end
 
 % DEFINE THE PRIVATE PROPERTIES
@@ -52,6 +53,61 @@ methods
             
        % Initilize the GUI
        initControlGUI(obj);
+    end
+    
+    % SETPREF: changes the current optics preferencs
+    function obj = opticsPref(obj,pref)
+        % Gather handle for the options GUI
+        H = findobj('Tag','OpticsOptions');
+        
+        % Throw an error if called without the options GUI open
+        if isempty(H) || ~ishandle(H);
+            error('The options window must be opened!');
+        else
+            h = guihandles(H);
+        end
+        
+        % Gather the new preference
+        if isnumeric(obj.(pref));
+            obj.(pref) = get(h.(pref),'Value');
+        elseif ischar(obj.(pref));
+            obj.(pref) = get(h.(pref),'String');
+        end
+    end
+              
+    % SETDEFAULTPREF: sets the current preferences as the default
+    function obj = setdefaultPref(obj)
+        % Loop through each preference and store
+        p = obj.pref;
+        for i = 1:length(p);
+            setpref('OpticsOptions',p{i},obj.(p{i}));
+        end
+    end
+    
+    % GETDEFAULTPREF: recalls and implements the default preferences
+    function obj = getdefaultPref(obj)  
+        % Loop through each preference and load the default
+        p = obj.pref;
+        for i = 1:length(p);
+            if ispref('OpticsOptions',p{i});
+                obj.(p{i}) = getpref('OpticsOptions',p{i});
+            else % create if it does not already exist
+                setpref('OpticsOptions',p{i},obj.(p{i}));
+            end
+        end
+        
+        % Applies the default preferences, if the options windows is open       
+        H = findobj('Tag','OpticsOptions');
+        if ~isempty(H) && ishandle(H);
+            h = guihandles(H); % GUI handles of the options window        
+            for i = 1:length(p); % Loops through each preference
+                if isnumeric(obj.(p{i}));
+                    set(h.(p{i}),'Value',obj.(p{i}));
+                elseif ischar(obj.(p{i}));
+                    set(h.(p{i}),'String',obj.(p{i}));
+                end
+            end
+        end    
     end
            
     % GETFILES: gathers the image files based on the folders selected
@@ -198,6 +254,14 @@ methods
         
         % Delete the program control window
         delete(obj.fig);
+        
+        % Delete the options window
+        H = findobj('Tag','OpticsOptions'); delete(H);
+        
+        % Delete database images, if desired
+        if ~keeplocal
+            rmdir(obj.target,'s');
+        end
     end   
 end
 
@@ -230,6 +294,7 @@ guidata(obj.fig,obj);
 % Set the window name and callbacks for closing the GUI
 set(obj.fig,'Name','Optics Program Control');
 set(obj.fig,'CloseRequestFcn',@(src,event)closeOptics(obj));
+set(h.options,'Callback',@callback_pref);
 set(h.exit,'Callback',@(src,event)closeOptics(obj));
 
 % Define callbacks for folder selection
@@ -247,7 +312,10 @@ set(h.WSsave,'callback',@(src,event)saveWS(obj,obj.opticsPath,...
         obj.opticsFile));
 set(h.WSsaveas,'callback',@(src,event)saveWS(obj,'',''));
 set(h.WSopen,'callback',@(src,event)loadWS(obj));
-   
+
+% Get the default preferences
+obj.getdefaultPref;
+
 % Intilize the GUI by calling the experiment folder callback
 callback_exp(h.exp,[],'init');
 end
@@ -343,13 +411,64 @@ end
 end
 
 %--------------------------------------------------------------------------
+function callback_pref(hObject,~)
+% CALLBACK_PREF opens the optics object preferences
+
+obj = guidata(hObject);
+H = findobj('Tag','OpticsOptions'); delete(H);
+H = open('opticsPrefGUI.fig'); drawnow;
+h = guihandles(H);
+
+for i = 1:length(obj.pref);
+    p = obj.pref{i};
+    if isnumeric(obj.(p)) || islogical(obj.(p));
+        type = 'Value'; obj.(p) = double(obj.(p));
+    elseif ischar(p);
+        type = 'String';
+    end
+    set(h.(p),'Callback',@(src,evnt)opticsPref(obj,p),...
+        type,obj.(p));
+end
+
+set(h.changetarget,'callback',{@callback_changetarget,obj});
+set(h.savedef,'callback',@(src,evnt)setdefaultPref(obj));
+set(h.loaddef,'callback',@(src,evnt)getdefaultPref(obj));
+set(h.close,'Callback','close(gcbf)');
+
+end
+
+%--------------------------------------------------------------------------
+function callback_changetarget(hObject,~,obj)
+% CALLBACK_CHANGETARGET changes the targed directory for local image files
+
+% Determine/set the last used directory
+if ispref('OpticsOptions','LastUsedOpticsDatabaseDir');
+    pth = getpref('OpticsOptions','LastUsedOpticsDatabaseDir');
+else
+    pth = cd;
+end
+
+% Gather the directory
+pth = uigetdir(pth,'Select taget directory');
+if isnumeric(pth); return; end
+
+% Update the object, GUI, and stored directory
+obj.target = pth;
+h = guihandles(hObject);
+set(h.target,'String',pth);
+setpref('OpticsOptions','LastUsedOpticsDatabaseDir',pth);
+
+end
+
+%--------------------------------------------------------------------------
 function angle = getAngleFolder(h,obj,varargin)
 % GETANGLEFOLDER gathers the angle, viewer, zintth folder    
-    
+
 % Gather the current path based on selected folders
 thepath = buildpath(obj.exp,obj.folder,obj.type);
 
 % Gather exiting angles
+z = ''; v = ''; a = '';
 if ~isempty(obj.angle);
    z = obj.angle(2:3);
    v = obj.angle(5:6);
@@ -400,6 +519,7 @@ end
 
 %--------------------------------------------------------------------------
 function val = initFolder(hObject,str,varargin)
+% INITFOLDER initilize the folder sturture of the optics control GUI
     strarray = get(hObject,'String');
     if ~isempty(varargin) && strcmpi(varargin{1},'init') && ~isempty(str);
         val = strmatch(str,strarray);
