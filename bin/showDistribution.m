@@ -27,9 +27,8 @@ function h = showDistribution(R,varargin)
     opt = gatheruseroptions(opt,varargin{:});
 
 % 2 - DEFINE THE IMOBJECT HANDLE AND DISABLE THE FIGURE(s)
-    imObj = R.parent;
-    imObj.progress;
-    
+    R(1).parent.progress;
+  
 % 3 - SEPERATE THE REGIONS AND COMPUTE THE EPDF FUNCTIONS    
     % 3.1 - Prepare for computing regions
     N = length(R);              % The number of regions
@@ -41,18 +40,18 @@ function h = showDistribution(R,varargin)
 
     % 3.2 - Compute the region distributions
     for i = 1:N;
-        r = R(i).image; % The current image region
+        data = R(i).parent.getImage(R(i).type); 
+        mask = R(i).getRegionMask;
         
         % 3.2.1 - Compute the RGB distributions
         if opt.rgb;
-            for j = 1:size(r,3);
-                data = r(:,:,j);
-                X = reshape(data,numel(data),1);
+            for j = 1:size(data,2);
                 [~,fname,ext] = fileparts(R(i).parent.filename);
                 a.legend{k} = [fname,ext,':',R(i).type,':',...
                     R(i).label,'(',rgb{j},')'];
-                  [f(:,k),xi(:,k)] = ksdensity(X,'kernel',opt.kernel,...
-                    'npoints',opt.npoints);
+                X = data(mask,j);
+                [f(:,k),xi(:,k)] = ksdensity(double(X),...
+                      'kernel',opt.kernel,'npoints',opt.npoints);
                 k = k + 1;
             end
             
@@ -63,12 +62,12 @@ function h = showDistribution(R,varargin)
 
         % 3.2.3 - Compute the mean distributions
         else
-            data = mean(r,3); 
-            X = reshape(data,numel(data),1);
+            data = mean(data,2); 
+            data = data(mask);
             [~,fname,ext] = fileparts(R(i).parent.filename);
             a.legend{i} = [fname,ext,':',R(i).type,':',...
                 R(i).label];
-            [f(:,i),xi(:,i)] = ksdensity(X,'kernel',opt.kernel,...
+             [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
                 'npoints',opt.npoints);
        end
     end
@@ -94,7 +93,7 @@ function h = showDistribution(R,varargin)
     h = XYscatter(xi,f,'advanced',a);  
     
 % 5 - ENABLE THE FIGURE
-    imObj.progress;
+    R(1).parent.progress;
        
 %--------------------------------------------------------------------------
 function L = HSIlabels(opt)
@@ -117,8 +116,9 @@ function [f,xi,k,a] = computeHSI(R,opt,a,f,xi,k)
 % COMPUTEHSI calcules the PDF between the desired wavelenghts
 
 % Gather the image wavelenght information
-    imObj = R.parent;
-    w = imObj.info.wavelength; % Wavelenghts in the image
+    data = R.parent.getImage(R.type); % The image
+    mask = R.getRegionMask; % The selected region
+    w = R.parent.info.wavelength; % Wavelenghts in the image
     W = opt.wavelength; % Wavelength bands desired
     L = opt.wavelengthlabel; % Wavelength labels
 
@@ -126,11 +126,10 @@ function [f,xi,k,a] = computeHSI(R,opt,a,f,xi,k)
 for i = 1:size(W,2);
     % Seperate the desired data
     idx = w >= W(i,1) & w < W(i,2);
-    data = R.image(:,:,idx);
-    X = reshape(data,numel(data),1);
+    X = mean(data(mask,idx),2);
     
     % Append the legend
-    a.legend{k} = [imObj.filename,':',R.type,':',...
+    a.legend{k} = [R.parent.filename,':',R.type,':',...
                     R.label,'(',L{i},')'];
     
     % Append the PDF data            

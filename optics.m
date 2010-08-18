@@ -157,8 +157,12 @@ methods
         % Cylce through the images and download to local directory
         for i = 1:length(files);
             filename = [localpath,filesep,files{i}];
+            [~,~,ext] = fileparts(filename);
             if ~exist(filename,'file');
                 mget(obj.FTP,files{i},localpath);
+                if strcmpi('.bil',ext) || strcmpi('.bip',ext);
+                    mget(obj.FTP,[files{i},'.hdr'],localpath);
+                end
             end
             obj.handles(end+1) = imObject(filename);  
         end
@@ -484,6 +488,14 @@ if ~isempty(obj.angle);
 end
 
 % Define the available zenith angles
+zdir = dir(obj.FTP,[thepath,'/Z*']);
+if isempty(zdir);
+    warndlg('No angle directories exist!');
+    set(h.angles,'Value',0); 
+    callback_exp(h.exp,[],'init');
+    angle = '';
+    return;
+end
 data = struct2cell(dir(obj.FTP,[thepath,'/Z*']));
 str = char(data(1,:));
 Z = unique(cellstr(str(:,2:3)));

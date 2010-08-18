@@ -17,7 +17,6 @@ properties
     color = 'b'; % Color of the region
     label; % Label to place within the region for identification
     labelposition; % The coordinates for positioning the label
-    image; % Image filled with NaN's outside of the selection
 end
 
 % DEFINE THE PRIVE PROPERTIES
@@ -75,46 +74,12 @@ methods
         obj.freeze;
     end    
     
-    % GETREGION: collects the image information
-    function obj = getRegion(obj)
-        % Initilize
-        imObj = obj.parent; % Calling imObject parent
-        
-        if imObj.workNorm;
-            msg = 'Normalizing the image...';
-        else
-            msg = {};
-        end
-       	imObj.progress(msg); % Disable the imObject
-        
-        % Get the image information and develop the region mask
-        I = double(imObj.image); % The image
-        N = numel(I);  % Number of pixels
-        c = size(I,3); % Number of colors in image
-
-        % Normalize the image
-        if imObj.workNorm && ~isempty(imObj.norm);
-            for i = 1:c;
-                I(:,:,i) = I(:,:,i)/imObj.norm(i); 
-            end
-        end
-        
-        % Seperate the selected region
-        R = createMask(obj.imroi); % The image mask of the region       
-        R = repmat(R,[1,1,c]); % Expand the image mask
-                
-        % Apply the mask to the image, filling in NaN's
-        Rind = reshape(R,[1,1,N]);
-        Iind = reshape(I,[1,1,N]);
-        Iind(~Rind) = NaN;
-        
-        % Return the region, as a double
-        obj.image = reshape(Iind,size(I));
-        
-        % Enable the imObject
-        imObj.progress;
+    % GETREGIONMASK: returns an image mask
+    function mask = getRegionMask(obj)
+        mask = createMask(obj.imroi); % The image mask of the region
+        mask = reshape(mask,[],1); % Organizes the mask in columns 
     end
- 
+     
     % ADDLABEL: inserts the region label
     function obj = addlabel(obj,input)
         % Define the im axes handle and remove existing label
@@ -173,7 +138,7 @@ methods
     
     % DELETE: removes the imroi object and the text label
     function delete(obj)
-        if isobject(obj.imroi); delete(obj.imroi); end
+        if isvalid(obj.imroi); delete(obj.imroi(idx)); end
         if ishandle(obj.texthandle); delete(obj.texthandle); end
     end
 end

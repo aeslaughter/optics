@@ -37,6 +37,8 @@ function callback_live(hObject,~,p)
 h = guihandles(hObject);
 imObj = guidata(hObject);
 M = get(h.LiveMenu,'Checked');
+data = reshape(imObj.getImage,imObj.imsize);
+set(h.LiveMenu,'UserData',data);
 
 % TOGGLE THE MENUS AND BUTTONS
 if strcmpi(M,'off');
@@ -72,13 +74,9 @@ if isempty(fig) || ~ishandle(fig);
     
     % Graph a profile
     X = imObj.info.wavelength;
-    Y = squeeze(imObj.image(1,1,:));
+    Y = squeeze(data(1,1,:));
     
-    % Normalize the spectrum
-    if imObj.workNorm && ~isempty(imObj.norm);
-       Y = Y ./ imObj.norm'; 
-    end
-    
+    % Create graph
     [fig,ax] = XYscatter(X,Y,'advanced',a);
     set(fig,'NextPlot','add','UserData',{},'CloseRequestFcn',...
         @callback_deleteFig);
@@ -105,6 +103,7 @@ function callback_mouse(hObject,~,p,click)
 imObj = guidata(hObject);
 h = guihandles(hObject);
 fig = findobj('Name','Live Spectrum');
+data = get(h.LiveMenu,'UserData');
 
 % TURN OFF THE LIVE SPECTRUM IF THE FIGURE DOES NOT EXIST
 if isempty(fig) || ~ishandle(fig);
@@ -113,7 +112,7 @@ if isempty(fig) || ~ishandle(fig);
 end
 
 % GATHER THE CURSOR INFORMATION
-s = size(imObj.image);          % Image size
+s = imObj.imsize;               % Image size
 c = get(imgca,'CurrentPoint');  % Cursor location
 y = round(c(1,1));              % Y-coordinate
 x = round(c(1,2));              % X-coordinate
@@ -124,7 +123,7 @@ if y > 0 && y < s(2) && x > 0 && x < s(1);
     if click
         addPoint(p,x,y)
     else
-        Y = squeeze(imObj.image(x,y,:));
+        Y = squeeze(data(x,y,:));
         set(hfig.LiveLine,'YData',Y,'Visible','on');
         ylim('auto');
     end
@@ -183,9 +182,3 @@ for i = 1:length(hp); delete(hp{i}); end
 
 % Delete the figure
 delete(hObject);
-
-
-
-
-
-

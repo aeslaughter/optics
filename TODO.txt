@@ -1,16 +1,11 @@
 TODO:
--Continue working on optics object
-    a. Complete methods for saving/loading workspace
-        i. Children figs are being saved twice???
-    b. Add help and about menu options
+-Children figs are being saved twice???
 
 -When loading the following is given:
     Warning: Input for icon image Cdata was not recognized 
     > In imPlugin>imPlugin.set.PushtoolCdata at 118
 
 -imRegion needs a impoint capability, for use with HSI live view
-
--Add capability to read .bil files
 
 -Debug Control GUI folder selecting, missing files and such...
 
@@ -21,5 +16,11 @@ TODO:
 -Add auto updater function
 
 -Enable the use of local directory only (add as optics option)
+
+-Region prompt needs to exclude the path as does the image name
+
+-Adjust image based on white background (add option)???
+
+-Test the default implugin settings
 
 

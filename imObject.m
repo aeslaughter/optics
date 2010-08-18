@@ -15,12 +15,11 @@ classdef imObject < handle
 properties % Public properties 
     % Properties defining the image 
     filename; % Filename of the image being opened
-    image;    % Array containing image information
-    display;  % Array containing image information for display
     norm;     % Coefficient(s) for normalizing image via white region
     info;     % Structure containing image information
     type;     % String dictating the image type
     imposition = []; % Position of the imtool window
+    imsize;   % The image size (in pixels) 
 
     % Properties for user selected regions
     white = imRegion.empty;
@@ -38,6 +37,7 @@ properties % Public properties
     workNorm = true;
     spectralon = true;
     regionPrompt = true;
+%     refreshImage = true;
 end 
    
 % DEFINE THE PRIVIATE PROPERTIES OF THE imObject CLASS
@@ -90,57 +90,61 @@ methods
        prefGUI(obj);
     end
     
+    % GETIMAGE: returns the raw image data
+    function data = getImage(obj,varargin)
+        [~,~,ext] = fileparts(obj.filename);   
+        switch ext;
+            case {'.bil','.bip'}; % Opens a hyperspectral image   
+                [data,~] = readBIP(obj.filename);
+                data = single(data);
+            otherwise; % Opens a traditional image file
+                data = single(imread(obj.filename));
+        end
+       
+        c = obj.imsize;
+        data = reshape(data,[],c(3));
+        
+        if nargin == 2 && strcmpi(varargin{1},'raw') ...
+                || nargin == 2 && strcmpi(varargin{1},'white');
+            return;
+        elseif obj.workNorm && ~isempty(obj.norm);
+            for i = 1:c(3);
+                data(:,i) = data(:,i)./obj.norm(i);
+            end
+        end   
+    end
+    
     % CALCNORM: Normalizes the data based on the white region(s)
     function obj = calcNorm(obj)
-        % Gather white region handles
+        % Gather white region handles        
+        obj.progress;
         R = obj.white;
-        
-        % Reset normalization in case white regions not defined or that the
-        % user has turned of the normalization in the general pref
-        if isempty(R) || ~obj.workNorm; 
-            obj.norm = []; % Remove the normal vector  
-                  
-            % Reset the work regions
-            R = obj.work;
-            for i = 1:length(R);
-                R(i).getRegion;
-            end
-                        
-            return; % Exit this method
-        end
-        
-        % Gather the normilization array dimensions
-        r = length(R);
-        n = size(obj.image,3);
-        
-        % Disable imObject functionality
-        obj.progress
         obj.norm = [];
-        
+                
+        % Prepare the image for analysis
+        r = length(R); % Number of white regions to consider
+        c = obj.imsize;
+        data = obj.getImage('raw');
+
         % Compute the mean values of the white regions
-        theNorm = zeros(r,n);
+        theNorm = zeros(r,c(3));
         for i = 1:r;  
-            R(i).getRegion;
-            I = R(i).image;
-            theNorm(i,:) = nanmean(nanmean(I));
+            mask = R(i).getRegionMask; 
+            for j = 1:c(3);
+                theNorm(i,j) = nanmean(data(mask,j));
+            end
         end
 
         % Update the normalization property
         obj.norm = mean(theNorm,1);
         
         % Apply HSI spectralon reference, if desired
-        if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
-            data = dlmread('teflon.txt');
-            yi = interp1(data(:,1),data(:,2),...
-                obj.info.wavelength,'spline','extrap');
-            obj.norm = obj.norm.*yi';
-        end
-        
-        % Update the work regions
-        R = obj.work;
-        for i = 1:length(R);
-            R(i).getRegion;
-        end
+%         if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
+%             data = dlmread('teflon.txt');
+%             yi = interp1(data(:,1),data(:,2),...
+%                 obj.info.wavelength,'spline','extrap');
+%             obj.norm = obj.norm.*yi';
+%         end
         
         % Restore functionality
         obj.progress
@@ -163,22 +167,9 @@ methods
         obj.imObjectName = [F,E];
         obj.imObjectPath = P;
         set(imgcf,'Name',[F,E,' (',imF,imE,')']);
-
-        % Copy the object and remove extenous data
-        S = struct(obj);
-        tmp = {'display','image','info','imhandle','ovhandle'};
-        for i = 1:length(tmp); obj.(tmp{i}) = []; end
-              
-        % Remove . directory if it exits
-        [pth,fn] = fileparts(imFile);
-        dotdir = [pth,filesep,'.',fn];
-        if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
         
         % Save the object and the children
         save(imFile,'-mat','obj');
-        
-        % Restore the data
-        for i = 1:length(tmp); obj.(tmp{i}) = S.(tmp{i}); end
         
         % Enable the figure
         obj.progress;
@@ -236,24 +227,11 @@ methods
             obj.hprog = findobj('enable','on');
             set(obj.hprog,'enable','off');
             drawnow;
-             % Create a wait dlg
-            if ~isempty(varargin)
-                d = dialog('Units','Normalized','WindowStyle','Normal',...
-                    'Tag','imObjectProgressWindow','Name',...
-                    'Please wait...','Position',[0.45,0.475,0.1,0.05]);
-                a = annotation(d,'textbox',[0,0,1,1],...
-                    'String',varargin{1},'HorizontalAlignment','center',...
-                    'VerticalAlignment','middle');
-                drawnow;
-                set(d,'WindowStyle','modal');
-            end
             
         % Enable handles    
         else
             set(obj.hprog,'enable','on');
             obj.hprog = [];
-            d = findobj('Tag','imObjectProgressWindow');
-            delete(d);
         end
     end
     
@@ -333,19 +311,18 @@ if isempty(obj.filename); return; end
 switch ext;
     case {'.bil','.bip'}; % Opens a hyperspectral image   
         % Reads the *.bip and *.bip.hdr files
-        [obj.image, obj.info] = readBIP(obj.filename);
-        obj.image = single(obj.image);
+        [data, obj.info] = readBIP(obj.filename);
+        IM = single(viewBIP(data,obj.info));
+        obj.imsize = size(data);
         obj.type = {'HSI'};
-        obj.display = single(viewBIP(obj.image,obj.info));
-        
     otherwise; % Opens a traditional image file
-        obj.type = {'VIS','NIR'};
-        obj.image = imread(obj.filename);
+        IM = imread(obj.filename);
+        obj.imsize = size(IM);
         obj.info = imfinfo(obj.filename);
-        obj.display = obj.image;     
+        obj.type = {'VIS','NIR'};
 end
 
-% OPEN THE IMAGE IN WITH IMTOOL 
+% BUILD THE IMAGE NAME
 if ~isempty(obj.imObjectName);
     [~,f,e] = fileparts(obj.imObjectName);
     name = [f,e,' (',obj.filename,')'];
@@ -354,15 +331,19 @@ else
     name = [f,e];
 end
 
-h = imtool(obj.display); 
+% OPEN THE IMAGE AND ASSIGN OBJ DATA AND 
+h = imtool(IM); 
+obj.imhandle = h;
+obj.imaxes = imgca;
 guidata(h,obj);
+
+% SET THE CLOSING FUNCTION AND RESIZE THE IMAGE
 set(h,'BusyAction','cancel','Units','Normalize','Name',name,...
     'CloseRequestFcn',@callback_closefcn);
 if ~isempty(obj.imposition);
     set(h,'Position',obj.imposition);
 end
-obj.imhandle = h;
-obj.imaxes = imgca;
+
 end   
 
 %--------------------------------------------------------------------------
@@ -463,26 +444,26 @@ function addhelpmenu(obj)
 
 h = obj.imhandle;
 im = uimenu(h,'Label','Help'); % The Regions menu
-    uimenu(im,'Label','Snow Optics Toolbox Help','Callback','gethelp');
-    uimenu(im,'Label','About Snow Optics Toolbox','Callback','about');
+uimenu(im,'Label','Snow Optics Toolbox Help','Callback','gethelp');
+uimenu(im,'Label','About Snow Optics Toolbox','Callback','about');
 end
 
 %--------------------------------------------------------------------------
 function obj = callback_createregion(obj,type,func)
 % CALLBACK_CREATEREGION gathers/creates regions via the imRegion class
 
-% Create the region and label it
+% Create the region
+R = imRegion(obj,type,func); 
+
+% Add the region to the imObject
 n = length(obj.(type)) + 1; 
-R = imRegion(obj,type,func);
+obj.(type)(n) = R;
+
+% Add the label
 R.addlabel([' ',num2str(n)]); 
 
-% Create the image mask (i.e., NaNs outside of the selection)
-R.getRegion;
-drawnow;
-
-% Update the imObject and compute normalization vector for white region
-obj.(type)(n) = R;
-if strcmpi(type,'white'); obj.calcNorm; end
+% Update the norm
+if strcmpi('white',type); obj.calcNorm; end;
 
 end
 

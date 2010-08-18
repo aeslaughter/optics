@@ -23,22 +23,18 @@ function h = showSpectrum(R,varargin)
     opt = gatheruseroptions(opt,varargin{:});
 
 % 2 - COLLECT PARENT IMOBJECT HANDLES AND DISABLE THE IMAGES
-N = length(R);
-for i = 1:N;
-    imObj(i) = R(i).parent;
-    imObj(i).progress;
-end
+    R(1).parent.progress;
 
 % 3 - CYCLE THROUGH REGIONS AND GATHER THE SPECTRUM DATA
 C = {};
-for i = 1:N;
+for i = 1:length(R);
     % 3.1 - Reshape the data such that size = [npixels,wavelenghts]
-    I = R(i).image;
-    data = reshape(I,size(I,1)*size(I,2),size(I,3));
+    data = R(i).parent.getImage;
+    size(data)
     
     % Build a cell array of the x,y data
     y = nanmean(data)'; 
-    x = imObj(i).info.wavelength;
+    x = R(i).parent.info.wavelength;
     C = [C,x,y];
     
     % Build the legend
@@ -68,9 +64,7 @@ if opt.ci;
 end
 
 % 6 - RE-ENABLE THE IMOBJECTS
-for i = 1:N;
-    imObj(i).progress;
-end
+    R(1).parent.progress;
 
 %--------------------------------------------------------------------------
 function plotCI(x,CI,ax,type)
