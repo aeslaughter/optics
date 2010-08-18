@@ -67,7 +67,8 @@ methods
         addpath('imPlugin','bin');
         createtools(obj);   
         obj.plugins = addplugins(obj);
-
+        addhelpmenu(obj);
+        
         % Setup up the overview window
         if strcmpi(obj.overview,'on'); obj.openOverview; end
         
@@ -362,7 +363,8 @@ function createtools(obj)
 % DEFINE THE imObject MENU
 h = obj.imhandle; % imtool handle
 [~,fn,ext] = fileparts(obj.filename);
-im = uimenu(h,'Label','imObject'); % The Regions menu
+set(h,'MenuBar','none');
+im = uimenu(h,'Label','im&Object'); % The Regions menu
     uimenu(im,'Label','imObject Save','callback',...
         @(src,event)saveimObject(obj,obj.imObjectPath,...
         obj.imObjectName));
@@ -444,6 +446,16 @@ end
     for i = 1:length(Pix);
         plugin(Pix(i)).createpushtool;
     end    
+end
+
+%--------------------------------------------------------------------------
+function addhelpmenu(obj)
+% ADDHELPMENU adds the help and about menu items to the GUI
+
+h = obj.imhandle;
+im = uimenu(h,'Label','Help'); % The Regions menu
+    uimenu(im,'Label','Snow Optics Toolbox Help','Callback','gethelp');
+    uimenu(im,'Label','About Snow Optics Toolbox','Callback','about');
 end
 
 %--------------------------------------------------------------------------

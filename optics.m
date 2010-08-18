@@ -44,12 +44,12 @@ methods
     % STARTUP: initilizes the optics class
     function obj = startup(obj)
        % Connect to the ftp site
-       try
+        try
             obj.FTP = ftp(obj.host,obj.username,obj.password);
             cd(obj.FTP,obj.thedir);
-       catch
-           error('optics:FTP:fail','Failed to connect to the FTP server!');
-       end
+        catch
+            warndlg('Failed to connect to the FTP server!');
+        end
             
        % Initilize the GUI
        initControlGUI(obj);
@@ -312,6 +312,8 @@ set(h.WSsave,'callback',@(src,event)saveWS(obj,obj.opticsPath,...
         obj.opticsFile));
 set(h.WSsaveas,'callback',@(src,event)saveWS(obj,'',''));
 set(h.WSopen,'callback',@(src,event)loadWS(obj));
+set(h.gethelp,'callback','gethelp');
+set(h.about,'callback','about');
 
 % Get the default preferences
 obj.getdefaultPref;
