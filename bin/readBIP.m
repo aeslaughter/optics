@@ -6,10 +6,10 @@ function [data,hdr] = readBIP(varargin)
 %   [data,hdr] = readBIP(filename);
 %
 %  DESCRIPTION:
-%   [data,hdr] = readBIP prompts the user for a *.bip hyperspectral file
-%       and returns the data in a 3D array and a data structure containing
-%       the header file information. The output array is sized as:
-%       [x-pixel,y-pixel,wavelength].
+%   [data,hdr] = readBIP prompts the user for a *.bip or *.bil 
+%       hyperspectral file and returns the data in a 3D array and a data 
+%       structure containing the header file information. The output array 
+%       is sized as: [x-pixel,y-pixel,wavelength].
 %   [data,hdr] = readBIP(filename) same as previous but opens the file
 %       specified in "filename".
 %
@@ -19,7 +19,7 @@ function [data,hdr] = readBIP(varargin)
 % 3 - DETERMINE THE BIP FILE FORMAT
 % 4 - READ THE FILE
 % 5 - SET THE LOCATION PREFERENCE
-% READHEADER extracts the *.bip information from the header file.
+% READHEADER extracts the information from the header file.
 %__________________________________________________________________________
 
 % 1 - DEFINE THE FILE TO OPEN
@@ -31,7 +31,7 @@ function [data,hdr] = readBIP(varargin)
         
     % 1.2 - Select the file to open (if not pr
         if nargin == 0;
-            filterspec = {'*.bip';'Hyperspectral file (*.bip)'};
+            filterspec = {'*.bip;*.bil';'Hyperspectral file (*.bip,*.bil)'};
             head = 'Select *.bip file...';
             [fn,pth] = uigetfile(filterspec,head,def);
             if fn == 0; data = []; hdr = []; return; end
@@ -58,30 +58,37 @@ function [data,hdr] = readBIP(varargin)
         case 4;  type = 'single';   % 4 byte floating point (single)
         case 5;  type = 'double';   % 8 byte floating point (double)
         otherwise
-            errordlg('The *.bip data type is unknown.','File Error!');
+            errordlg('The data type is unknown.','File Error!');
             return;
     end
 
 % 4 - READ THE FILE
     % 4.1 - Initilze the storage arrays
-        frame = zeros(hdr.bands,hdr.samples,hdr.lines,type);
+        if strcmpi(hdr.interleave,'bil');
+            count = [hdr.samples,hdr.bands];
+            frame = zeros(hdr.samples,hdr.bands,hdr.lines,type);
+            perm = [3,1,2];
+        elseif strcmpi(hdr.interleave,'bip');
+            count = [hdr.bands,hdr.samples];
+            frame = zeros(hdr.bands,hdr.samples,hdr.lines,type);
+            perm = [3,2,1];
+        end
 
     % 4.2 - Collect the data 
         fid = fopen(filename,'r');
-        count = [hdr.bands,hdr.samples];
         for i = 1:hdr.lines;
             frame(:,:,i) = fread(fid,count,type);
         end
-
+        
     % 4.3 - Change the indexing of data     
-        data = permute(frame,[3,2,1]);
-
+        data = permute(frame,perm);
+        
  % 5 - SET THE LOCATION PREFERENCE
     setpref('readBIP','location',fileparts(filename));
     
 %--------------------------------------------------------------------------
 function hdr = readheader(filename)
-% READHEADER extracts the *.bip information from the header file.
+% READHEADER extracts the information from the header file.
 
 % 1 - CHECK THAT HEADER FILE EXISTS
     hdr_file = [filename,'.hdr'];

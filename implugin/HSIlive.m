@@ -76,7 +76,7 @@ if isempty(fig) || ~ishandle(fig);
     
     % Normalize the spectrum
     if imObj.workNorm && ~isempty(imObj.norm);
-       Y = Y ./ imObj.norm; 
+       Y = Y ./ imObj.norm'; 
     end
     
     [fig,ax] = XYscatter(X,Y,'advanced',a);

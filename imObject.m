@@ -20,7 +20,7 @@ properties % Public properties
     norm;     % Coefficient(s) for normalizing image via white region
     info;     % Structure containing image information
     type;     % String dictating the image type
-    imposition = [0.15,0.25,0.5,0.5]; % Position of the imtool window
+    imposition = []; % Position of the imtool window
 
     % Properties for user selected regions
     white = imRegion.empty;
@@ -126,7 +126,7 @@ methods
         end
 
         % Update the normalization property
-        obj.norm = mean(theNorm,1); obj.norm
+        obj.norm = mean(theNorm,1);
         
         % Apply HSI spectralon reference, if desired
         if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
@@ -230,17 +230,30 @@ methods
     end
     
     % PROGRESS: Toggles the funtionallity of the imObject on and off
-    function progress(obj)
+    function progress(obj,varargin)
         % Disable handles
         if isempty(obj.hprog)
             obj.hprog = findobj('enable','on');
             set(obj.hprog,'enable','off');
             drawnow;
+             % Create a wait dlg
+            if ~isempty(varargin)
+                d = dialog('Units','Normalized','WindowStyle','Normal',...
+                    'Tag','imObjectProgressWindow','Name',...
+                    'Please wait...','Position',[0.45,0.475,0.1,0.05]);
+                a = annotation(d,'textbox',[0,0,1,1],...
+                    'String',varargin{1},'HorizontalAlignment','center',...
+                    'VerticalAlignment','middle');
+                drawnow;
+                set(d,'WindowStyle','modal');
+            end
             
         % Enable handles    
         else
             set(obj.hprog,'enable','on');
             obj.hprog = [];
+            d = findobj('Tag','imObjectProgressWindow');
+            delete(d);
         end
     end
     
@@ -318,19 +331,12 @@ if isempty(obj.filename); return; end
 % OPEN THE IMAGE
 [~,~,ext] = fileparts(obj.filename);   
 switch ext;
-    case '.bip'; % Opens a hyperspectral image
-        
+    case {'.bil','.bip'}; % Opens a hyperspectral image   
         % Reads the *.bip and *.bip.hdr files
         [obj.image, obj.info] = readBIP(obj.filename);
+        obj.image = single(obj.image);
         obj.type = {'HSI'};
-        
-        % Creates and image for display base on RGB wavelenghts
-        rgb = [620,750; 495,570; 380,450];
-        w = obj.info.wavelength;
-        for i = 1:size(rgb,1);
-           idx = w >= rgb(i,1) & w <= rgb(i,2);
-           obj.display(:,:,i) = mean(obj.image(:,:,idx),3); 
-        end
+        obj.display = single(viewBIP(obj.image,obj.info));
         
     otherwise; % Opens a traditional image file
         obj.type = {'VIS','NIR'};
@@ -351,7 +357,10 @@ end
 h = imtool(obj.display); 
 guidata(h,obj);
 set(h,'BusyAction','cancel','Units','Normalize','Name',name,...
-    'Position',obj.imposition,'CloseRequestFcn',@callback_closefcn);
+    'CloseRequestFcn',@callback_closefcn);
+if ~isempty(obj.imposition);
+    set(h,'Position',obj.imposition);
+end
 obj.imhandle = h;
 obj.imaxes = imgca;
 end   

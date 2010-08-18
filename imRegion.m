@@ -78,8 +78,14 @@ methods
     % GETREGION: collects the image information
     function obj = getRegion(obj)
         % Initilize
-        imObj = obj.parent; % Calling imObject paretn
-       	imObj.progress; % Disable the imObject
+        imObj = obj.parent; % Calling imObject parent
+        
+        if imObj.workNorm;
+            msg = 'Normalizing the image...';
+        else
+            msg = {};
+        end
+       	imObj.progress(msg); % Disable the imObject
         
         % Get the image information and develop the region mask
         I = double(imObj.image); % The image

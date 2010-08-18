@@ -30,6 +30,9 @@ properties (SetAccess = private)
     thedir = '/pub/snow/optics';
     extensions = {'.jpg','.bip','.bil'}; % File extensions to allow
     handles = imObject.empty; % Initilize the imObject handles
+    
+    version = 0.1; % Uses this to check for updates
+    verdate = 'August 18, 2010';
 end
 
 % DEFINE THE METHODS
@@ -259,7 +262,7 @@ methods
         H = findobj('Tag','OpticsOptions'); delete(H);
         
         % Delete database images, if desired
-        if ~keeplocal
+        if ~obj.keeplocal
             rmdir(obj.target,'s');
         end
     end   
@@ -317,6 +320,9 @@ set(h.about,'callback','about');
 
 % Get the default preferences
 obj.getdefaultPref;
+
+% Set the version propertery
+setpref('OpticsObject','version',{obj.version,obj.verdate});
 
 % Intilize the GUI by calling the experiment folder callback
 callback_exp(h.exp,[],'init');

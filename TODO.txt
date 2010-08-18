@@ -1,22 +1,25 @@
 TODO:
-1. Continue working on optics object
+-Continue working on optics object
     a. Complete methods for saving/loading workspace
         i. Children figs are being saved twice???
     b. Add help and about menu options
 
-2. When loading the following is given:
+-When loading the following is given:
     Warning: Input for icon image Cdata was not recognized 
     > In imPlugin>imPlugin.set.PushtoolCdata at 118
 
-3. imRegion needs a impoint capability, for use with HSI live view
+-imRegion needs a impoint capability, for use with HSI live view
 
-4. Add capability to read .bil files
+-Add capability to read .bil files
 
-5. Debug Control GUI folder selecting, missing files and such...
+-Debug Control GUI folder selecting, missing files and such...
 
-6. Complete m-file documentation
+-Complete m-file documentation
 
-7. Complete LaTeX documentation
+-Complete LaTeX documentation
 
-8. Add auto updating and version numbering
+-Add auto updater function
+
+-Enable the use of local directory only (add as optics option)
+
 
