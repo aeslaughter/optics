@@ -48,6 +48,8 @@ function callback_compare(hObject,~,~,p)
         mes = ['At least one "',type,'" region must exist!'];
         warndlg(mes,'Warning!');
         return;
+    elseif isnumeric(R) && isnan(R);
+        return;
     end
         
 % 2 - GATHER THE OPTIONS
