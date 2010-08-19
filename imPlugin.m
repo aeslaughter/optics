@@ -29,8 +29,6 @@ end
 % SET THE PRIVATE PROPERTIES OF THE CLASS
 properties (SetAccess = private)
     parent; % Handle for the parent imObject
-    children = []; % Handles to figure windows associated with plugin
-    figures = {}; % Filenames of open figures for recall at load
 end
 
 % DEFINE THE METHODS OF THE imPlugin CLASS
@@ -108,7 +106,7 @@ methods
         S = geticons;
 
         % Gather the icon data based on the input type
-        if isnumeric(input) && isequal(size(input),[16,16,3]); % Numeric
+        if isnumeric(input) && all(size(input)==[16,16,3]); % Numeric
             obj.PushtoolCdata = input;
         elseif exist(input,'file'); % Image file
             obj.PushtoolCdata = imread(input);

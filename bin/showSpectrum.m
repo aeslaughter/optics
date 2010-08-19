@@ -30,7 +30,6 @@ C = {};
 for i = 1:length(R);
     % 3.1 - Reshape the data such that size = [npixels,wavelenghts]
     data = R(i).parent.getImage;
-    size(data)
     
     % Build a cell array of the x,y data
     y = nanmean(data)'; 

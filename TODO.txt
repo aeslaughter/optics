@@ -1,26 +1,17 @@
 TODO:
--Children figs are being saved twice???
-
--When loading the following is given:
-    Warning: Input for icon image Cdata was not recognized 
-    > In imPlugin>imPlugin.set.PushtoolCdata at 118
-
--imRegion needs a impoint capability, for use with HSI live view
+-save live view figure also saves the imObject, likely due to the use of 
+the imObject handle in the callbacks
 
 -Debug Control GUI folder selecting, missing files and such...
 
--Complete m-file documentation
-
--Complete LaTeX documentation
-
--Add auto updater function
+-Auto detect updates
 
 -Enable the use of local directory only (add as optics option)
 
 -Region prompt needs to exclude the path as does the image name
 
--Adjust image based on white background (add option)???
-
 -Test the default implugin settings
 
+-Complete m-file documentation
 
+-Complete LaTeX documentation

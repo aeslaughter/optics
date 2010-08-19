@@ -1,8 +1,8 @@
-function p = HSIlive(obj)
+function p = HSIlive(imObj)
 % IM_REGIONPDF is a imObject plugin for computing EPDFS of image regions
 
 % 1 - DEFINE THE PLUGIN AND CALLBACK
-p = imPlugin(obj,mfilename);
+p = imPlugin(imObj,mfilename);
 p.plugintype = {'HSI'};
 Callback = @(hObject,eventdata) callback_live(hObject,eventdata,p);
 
@@ -35,7 +35,7 @@ function callback_live(hObject,~,p)
 
 % GATHER INFORMATION FROM THE GUI
 h = guihandles(hObject);
-imObj = guidata(hObject);
+imObj = p.parent;
 M = get(h.LiveMenu,'Checked');
 data = reshape(imObj.getImage,imObj.imsize);
 set(h.LiveMenu,'UserData',data);
@@ -52,7 +52,7 @@ end
 % RETURN IF THE LIVE VIEWER IS TURNED OFF
 B = get(h.LiveButton,'State');
 if strcmpi(B,'off'); 
-    set(imgcf,'WindowButtonMotionFcn','', 'WindowButtonDownFcn','',...
+    set(imgcf,'WindowButtonMotionFcn','','WindowButtonDownFcn','',...
         'Pointer','arrow','Units','Normalized');
     return;
 end
@@ -78,8 +78,8 @@ if isempty(fig) || ~ishandle(fig);
     
     % Create graph
     [fig,ax] = XYscatter(X,Y,'advanced',a);
-    set(fig,'NextPlot','add','UserData',{},'CloseRequestFcn',...
-        @callback_deleteFig);
+    set(fig,'NextPlot','add','Tag','LiveHSIViewer','CloseRequestFcn',...
+        {@callback_deleteFig,p});
     
     % Setup the handle for the live view line
     hL = findobj(ax,'Type','Line');
@@ -91,18 +91,19 @@ if isempty(fig) || ~ishandle(fig);
 end
 
 % DEFINE THE APPROPRIATE CALLBACKS FOR OPERATING THE LIVE VIEW
-set(imgcf,'Units','pixels','WindowButtonMotionFcn',{@callback_mouse,p,false},...
-        'Pointer','fullcrosshair','Interruptible','off',...
-        'WindowButtonDownFcn',{@callback_mouse,p,true});
+set(imgcf,'Units','pixels','WindowButtonMotionFcn',...
+        {@callback_mouse,p,false},'Pointer','fullcrosshair',...
+        'Interruptible','off','WindowButtonDownFcn',...
+        {@callback_mouse,p,true});
 
 %--------------------------------------------------------------------------
 function callback_mouse(hObject,~,p,click)
 % CALLBACK_MOUSE operates when the mouse is moved and clicked
 
 % GATHER INFORMATION FROM THE GUI
-imObj = guidata(hObject);
 h = guihandles(hObject);
-fig = findobj('Name','Live Spectrum');
+imObj = p.parent;
+fig = findobj('Tag','LiveHSIViewer');
 data = get(h.LiveMenu,'UserData');
 
 % TURN OFF THE LIVE SPECTRUM IF THE FIGURE DOES NOT EXIST
@@ -136,7 +137,8 @@ function addPoint(p,x,y)
 % ADDPOINT when the mouse is clicked a point is added to the graph
 
 % Gather the necessary handles
-fig = findobj('Name','Live Spectrum');
+fig = findobj('Tag','LiveHSIViewer');
+imObj = p.parent;
 hfig = guihandles(fig);
 ax = get(hfig.LiveLine,'Parent');
 
@@ -156,29 +158,24 @@ legend(hline,M);
 
 % Add a point in the image
 C = get(cline,'Color');
-hp = impoint(imgca,y,x);
+R = imObj.createRegion('point','impoint',[y,x]);
+hp = R.imroi;
 hp.setColor(C);
 
-% Set the position of the impoint
-fcn = makeConstrainToRectFcn('impoint',[y,y],[x,x]);
-hp.setPositionConstraintFcn(fcn); 
-
 % Update the label, if desired
-if p.Pref(3).Value;
-    hp(end).setString(label);
-end
-
-% Store the handles to the impoints
-points = get(fig,'UserData');
-set(fig,'UserData',[{hp},points]);
+if p.Pref(3).Value; R.addlabel(label); end
 
 %--------------------------------------------------------------------------
-function callback_deleteFig(hObject,~)
+function callback_deleteFig(hObject,~,p)
 % CALLBACK_DELETEFIG is called when the Live Spectrum window is deleted
 
-% Remove the impoint objects
-hp = get(hObject,'UserData');
-for i = 1:length(hp); delete(hp{i}); end
-
-% Delete the figure
-delete(hObject);
+% Remove the points and toggle the viewer off (if imObject still exists)
+if isvalid(p); 
+    p.parent.removeRegion('point');
+    h = guihandles(p.parent.imhandle);
+    callback_live(h.LiveMenu,[],p);
+end
+ 
+% Remove the live view figure
+fig = findobj('Tag','LiveHSIViewer');
+delete(fig);

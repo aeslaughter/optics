@@ -24,6 +24,7 @@ properties % Public properties
     % Properties for user selected regions
     white = imRegion.empty;
     work = imRegion.empty;
+    point = imRegion.empty;
 
     % Properties associated with the overview window
     overview = 'off'; % Open the overview window
@@ -37,7 +38,6 @@ properties % Public properties
     workNorm = true;
     spectralon = true;
     regionPrompt = true;
-%     refreshImage = true;
 end 
    
 % DEFINE THE PRIVIATE PROPERTIES OF THE imObject CLASS
@@ -92,6 +92,7 @@ methods
     
     % GETIMAGE: returns the raw image data
     function data = getImage(obj,varargin)
+        % Read the image data
         [~,~,ext] = fileparts(obj.filename);   
         switch ext;
             case {'.bil','.bip'}; % Opens a hyperspectral image   
@@ -101,12 +102,16 @@ methods
                 data = single(imread(obj.filename));
         end
        
+        % Re-shape the data into columns
         c = obj.imsize;
         data = reshape(data,[],c(3));
         
+        % If the 'raw' or 'white' tags are used, ignore normalizing
         if nargin == 2 && strcmpi(varargin{1},'raw') ...
                 || nargin == 2 && strcmpi(varargin{1},'white');
             return;
+            
+        % Apply normalization, if desired    
         elseif obj.workNorm && ~isempty(obj.norm);
             for i = 1:c(3);
                 data(:,i) = data(:,i)./obj.norm(i);
@@ -114,7 +119,7 @@ methods
         end   
     end
     
-    % CALCNORM: Normalizes the data based on the white region(s)
+    % CALCNORM: Computes normalization vector from white region(s)
     function obj = calcNorm(obj)
         % Gather white region handles        
         obj.progress;
@@ -139,17 +144,42 @@ methods
         obj.norm = mean(theNorm,1);
         
         % Apply HSI spectralon reference, if desired
-%         if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
-%             data = dlmread('teflon.txt');
-%             yi = interp1(data(:,1),data(:,2),...
-%                 obj.info.wavelength,'spline','extrap');
-%             obj.norm = obj.norm.*yi';
-%         end
+        if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
+            data = dlmread('teflon.txt');
+            yi = interp1(data(:,1),data(:,2),...
+                obj.info.wavelength,'spline','extrap');
+            obj.norm = obj.norm.*yi';
+        end
         
         % Restore functionality
         obj.progress
     end
-     
+    
+    % CREATEREGION: gathers/creates regions via the imRegion class
+    function R = createRegion(obj,type,func,varargin)
+        % Create the region
+        R = imRegion(obj,type,func,varargin{:}); 
+
+        % Add the region to the imObject
+        n = length(obj.(type)) + 1; 
+        obj.(type)(n) = R;
+
+        % Add the label for white/work regions
+        if ~strcmpi(func,'impoint');
+            R.addlabel([' ',num2str(n)]); 
+        end
+
+        % Update the normalize vector
+        if strcmpi('white',type); obj.calcNorm; end;
+    end
+    
+    % REMOVEREGION: removes regions from the imObject
+    function obj = removeRegion(obj,type)
+        delete(obj.(type));  
+        obj.(type)= imRegion.empty;
+        if strcmpi(type,'white'); obj.norm = []; end
+    end
+    
     % SAVEimObject: Allows user to save the imObject
     function saveimObject(obj,thepath,thefile)
         % Determine the file to save
@@ -169,6 +199,7 @@ methods
         set(imgcf,'Name',[F,E,' (',imF,imE,')']);
         
         % Save the object and the children
+        obj.saveChildren;    
         save(imFile,'-mat','obj');
         
         % Enable the figure
@@ -185,7 +216,7 @@ methods
         end
         
         % Saves the imObjects children figures
-        obj.saveChildren;       
+             
     end
         
     % ADDCHILD: keeps track of figures created using the plugin
@@ -199,12 +230,16 @@ methods
     function saveChildren(obj)
         % Gather the figure handles, return if empty
         h = obj.children(ishandle(obj.children));
-        if isempty(h); return; end
-        
+        disp('saveChildren');
+
         % Define the path for saving figures
         pth = obj.imObjectPath;
         [~,fn,~] = fileparts(obj.imObjectName);
         figpath = [pth,filesep,'.',fn];
+        
+        % Remove existing directory and return if no children exist
+        if isdir(figpath); rmdir(figpath,'s'); end
+        if isempty(h); return; end
                
         % Create the direcotry
         mkdir(figpath); 
@@ -230,15 +265,10 @@ methods
             
         % Enable handles    
         else
-            set(obj.hprog,'enable','on');
+            idx = ishandle(obj.hprog);;
+            set(obj.hprog(idx),'enable','on');
             obj.hprog = [];
         end
-    end
-    
-    % SET.workNORM: Operates when the workNorm property is changed
-    function obj = set.workNorm(obj,input)
-        obj.workNorm = input;
-        obj.calcNorm;        
     end
     
     % ADDROOT: Adds the created imObject to an array of handles
@@ -275,17 +305,10 @@ methods (Static)
         obj = openimage(obj,obj.filename); % Opens the desired image
         obj.startup; % Initilizes the image (as created)
 
-        % Restore work regions
-        for i = 1:length(obj.work);
-            obj.work(i).createregion('load');
-            obj.work(i).addlabel(obj.work(i).label);
-        end
-        
-        % Restore white regions
-        for i = 1:length(obj.white);
-            obj.white(i).createregion('load');
-            obj.white(i).addlabel(obj.white(i).label);
-        end
+        % Restore regions
+        for i = 1:length(obj.work); obj.work(i).createregion; end
+        for i = 1:length(obj.white); obj.white(i).createregion; end
+        for i = 1:length(obj.point); obj.point(i).createregion; end
         
         % Open the figures
         for i = 1:length(obj.figures);
@@ -331,7 +354,7 @@ else
     name = [f,e];
 end
 
-% OPEN THE IMAGE AND ASSIGN OBJ DATA AND 
+% OPEN THE IMAGE AND ASSIGN OBJECT DATA
 h = imtool(IM); 
 obj.imhandle = h;
 obj.imaxes = imgca;
@@ -375,19 +398,19 @@ m = uimenu(h,'Label','Regions'); % The Regions menu
 w = uimenu(m,'Label','Add White Reference','Separator','on');
     for i = 1:length(type);
         uimenu(w,'Label',type{i},'callback',...
-            @(src,event)callback_createregion(obj,'white',type{i}));
+            @(src,event)createRegion(obj,'white',type{i}));
     end
     uimenu(m,'Label','Clear White Reference(s)','callback',...
-        @(src,event)callback_rmregion(obj,'white'));
+        @(src,event)removeRegion(obj,'white'));
     
 % DEFINE THE WORK REGION MENUS    
 w = uimenu(m,'Label','Add Work Region','Separator','on');
     for i = 1:length(type);
         uimenu(w,'Label',type{i},'callback',...
-            @(src,event)callback_createregion(obj,'work',type{i}));
+            @(src,event)createRegion(obj,'work',type{i}));
     end
     uimenu(m,'Label','Clear Work Region(s)','callback',...
-        @(src,event)callback_rmregion(obj,'work'));   
+        @(src,event)removeRegion(obj,'work'));   
     
 % DEFINE THE TOOLBAR W/ PREFERENCES BUTTON
     icon = load('icon/icons.ico','-mat');
@@ -449,33 +472,6 @@ uimenu(im,'Label','About Snow Optics Toolbox','Callback','about');
 end
 
 %--------------------------------------------------------------------------
-function obj = callback_createregion(obj,type,func)
-% CALLBACK_CREATEREGION gathers/creates regions via the imRegion class
-
-% Create the region
-R = imRegion(obj,type,func); 
-
-% Add the region to the imObject
-n = length(obj.(type)) + 1; 
-obj.(type)(n) = R;
-
-% Add the label
-R.addlabel([' ',num2str(n)]); 
-
-% Update the norm
-if strcmpi('white',type); obj.calcNorm; end;
-
-end
-
-%--------------------------------------------------------------------------      
-function obj = callback_rmregion(obj,item)
-% CALLBACK_RMREGION removes regions
-    delete(obj.(item));  
-    obj.(item)= imRegion.empty;
-    if strcmpi(item,'white'); obj.norm = []; end
-end
-
-%--------------------------------------------------------------------------
 function callback_overview(hObject,~)
 % CALLBACK_OVERVIEW toggle the overview window  
 obj = guidata(hObject);
@@ -496,7 +492,7 @@ end
 function callback_closefcn(hObject,~)
 % CALLBACK_CLOSEFCN closes the imObject by deleting the class and figure
     obj = guidata(hObject);
-    figs = obj.plugins.children;
+    figs = obj.children;
     for i = 1:length(figs); 
         if ishandle(figs(i)); delete(figs(i)); end; 
     end

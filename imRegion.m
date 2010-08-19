@@ -28,7 +28,7 @@ end
 % DEFINE THE METHODS
 methods
     % imRegion: executes upon the creation of the object
-    function obj = imRegion(imobj,type,func)
+    function obj = imRegion(imobj,type,func,varargin)
         % Assign the user supplied input
         obj.parent = imobj;
         obj.func = func;
@@ -36,6 +36,11 @@ methods
         
         % Define the color based on the type
         if strcmpi(obj.type,'white'); obj.color = 'r'; end
+        
+        % Assign position directly (used with impoint)
+        if ~isempty(varargin);
+            obj.position = varargin{1};
+        end
         
         % Create the region
         obj.createregion;
@@ -48,16 +53,16 @@ methods
             case {'f','freehand','imfreehand'};    obj.func = 'imfreehand';
             case {'p','poly','polygon','impoly'};  obj.func = 'impoly';    
             case {'r','rect','rectangle','imrect'};obj.func = 'imrect';
+            case {'impoint'};                      obj.func = 'impoint';
         end     
     end
     
     % CREATEREGION: builds the imroi region
-    function obj = createregion(obj,varargin)
+    function obj = createregion(obj)
         % Define the region using the im* functions  
         ax = obj.parent.imaxes;
-        if ~isempty(varargin) && strcmpi(varargin{1},'load');
+        if ~isempty(obj.position);
              h = feval(obj.func,ax,obj.position);
-            %obj.position = getPosition(h);
         else
             h = feval(obj.func,ax);
             obj.position = wait(h);
@@ -72,8 +77,12 @@ methods
 
         % Freeze the region position
         obj.freeze;
-    end    
-    
+        
+        % Add the label, if not isempty
+        if ~isempty(obj.label);
+           obj.addlabel(obj.label); 
+        end
+    end     
     % GETREGIONMASK: returns an image mask
     function mask = getRegionMask(obj)
         mask = createMask(obj.imroi); % The image mask of the region
@@ -82,9 +91,16 @@ methods
      
     % ADDLABEL: inserts the region label
     function obj = addlabel(obj,input)
+        % Add label in the case of impoint
+        if strcmpi(obj.func,'impoint');
+            obj.imroi.setString(input);
+            return;
+        end
+        
         % Define the im axes handle and remove existing label
         ax = imgca(obj.parent.imhandle);
         if ishandle(obj.texthandle); delete(obj.texthandle); end
+        if isempty(input); return; end % Return if the label is empty
     
         % Gather the label and label position
         obj.label = input;
@@ -114,6 +130,8 @@ methods
             case {'impoly','imellipse','imfreehand'};
                 X = [min(pos(:,1)), max(pos(:,1))]; 
                 Y = [min(pos(:,2)), max(pos(:,2))]; 
+            case 'impoint';
+                X = [pos(2),pos(2)]; Y = [pos(1),pos(1)];
         end
     
         % Restrict the region so it cannot be resized
@@ -138,7 +156,7 @@ methods
     
     % DELETE: removes the imroi object and the text label
     function delete(obj)
-        if isvalid(obj.imroi); delete(obj.imroi(idx)); end
+        if isvalid(obj.imroi); delete(obj.imroi); end
         if ishandle(obj.texthandle); delete(obj.texthandle); end
     end
 end
