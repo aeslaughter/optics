@@ -2,6 +2,8 @@ TODO:
 -saveobj is being called twice, and the saving of live view causes the 
 imObject to be saved as a fig file (I don't know why)
 
+-Optics workspace not saving .fig files
+
 -Debug Control GUI folder selecting, missing files and such...
 
 -Auto detect updates
@@ -9,6 +11,8 @@ imObject to be saved as a fig file (I don't know why)
 -Enable the use of local directory only (add as optics option)
 
 -Region prompt needs to exclude the path as does the image name
+
+-Remove empty <.name> directories
 
 -Test the default implugin settings
 

@@ -129,7 +129,8 @@ for i = 1:size(W,2);
     X = mean(data(mask,idx),2);
     
     % Append the legend
-    a.legend{k} = [R.parent.filename,':',R.type,':',...
+    [~,fn,ext] = fileparts(R.parent.filename);
+    a.legend{k} = [fn,ext,':',R.type,':',...
                     R.label,'(',L{i},')'];
     
     % Append the PDF data            

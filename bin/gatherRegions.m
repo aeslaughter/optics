@@ -20,17 +20,18 @@ end
 R = [H(:).(type)];
 if length(R) > 1; % Prompts user
     r = promptUser(R);
-else; % Case when only one region is available (don't prompt)
+else % Case when only one region is available (don't prompt)
     r = R;
 end
 
 %--------------------------------------------------------------------------
-function r = promptUser(R);
+function r = promptUser(R)
 % PROMPTUSER opens a dialog with the available regions
 
 % Build a list of the available regions
 for i = 1:length(R);
-    list{i} = [R(i).parent.filename,' : ',R(i).label];
+    [~,fn,ext] = fileparts(R(i).parent.filename);
+    list{i} = [fn,ext,' : ',R(i).label];
 end
 
 % Build the dialog
@@ -49,9 +50,5 @@ if ishandle(hlist);
     r = R(val);
     close(d);
 else
-    r = [];
+    r = NaN;
 end
-
-
-
-
