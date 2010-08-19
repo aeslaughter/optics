@@ -23,16 +23,19 @@ properties
 end
 
 % DEFINE THE PRIVATE PROPERTIES
-properties (SetAccess = private)
+properties (SetAccess = private)   
+    version = 0.1; % Uses this to check for updates
+    verdate = 'August 18, 2010';
+end
+
+% DEFINE THE PRIVATE, UNSAVED PROPERTIES
+properties (SetAccess = private, Transient = true)
     host = 'caesar.ce.montana.edu';         
     username = 'anonymous';                 
     password = 'snowoptics';
     thedir = '/pub/snow/optics';
     extensions = {'.jpg','.bip','.bil'}; % File extensions to allow
     handles = imObject.empty; % Initilize the imObject handles
-    
-    version = 0.1; % Uses this to check for updates
-    verdate = 'August 18, 2010';
 end
 
 % DEFINE THE METHODS
@@ -155,6 +158,7 @@ methods
         end
         
         % Cylce through the images and download to local directory
+        d = waitdlg('Opening/downloading images, please wait...');
         for i = 1:length(files);
             filename = [localpath,filesep,files{i}];
             [~,~,ext] = fileparts(filename);
@@ -166,6 +170,7 @@ methods
             end
             obj.handles(end+1) = imObject(filename);  
         end
+        if ishandle(d); delete(d); end
         
         % Return the ftp directory to the base
         cd(obj.FTP,obj.thedir);
@@ -187,40 +192,19 @@ methods
         idx = isvalid(obj.handles);
         obj.handles = obj.handles(idx);
         
-        % Cycle through each imObject and remove image data (saves space)
-        tmp = {'display','image','info'};
-        [pth,fname,ext] = fileparts(filename);  
-        for i = 1:length(obj.handles);
-            % Set the imObject path and filename (used for saving *.figs)
-            obj.handles(i).imObjectPath = pth;
-            obj.handles(i).imObjectName = [fname,ext];
-            
-            % Copy the object and remove extenous data
-            S(i) = struct(obj.handles(i));
-            for j = 1:length(tmp); obj.handles(i).(tmp{j}) = []; end
-        end
-        
         % Update the control window position
         set(obj.fig,'Units','normalized');
         obj.position = get(obj.fig,'position');
                      
-        % Remove . directory if it exits
-        [pth,fn] = fileparts(filename);
-        dotdir = [pth,filesep,'.',fn];
-        if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
+%         % Remove . directory if it exits
+%         [pth,fn] = fileparts(filename);
+%         dotdir = [pth,filesep,'.',fn];
+%         if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
         
         % Save the optics object
         obj.opticsPath = pth;
         obj.opticsFile = [fname,ext];
         save(filename,'-mat','obj');
-        
-        % Restore the imObject data
-        for i = 1:length(obj.handles);
-            for j = 1:length(tmp); 
-                obj.handles(i).(tmp{j}) = S.(tmp{j}); 
-            end
-        end
-
     end
     
     % LOADWS: operates when loading a workspace
@@ -490,7 +474,7 @@ end
 % Define the available zenith angles
 zdir = dir(obj.FTP,[thepath,'/Z*']);
 if isempty(zdir);
-    warndlg('No angle directories exist!');
+    disp('No angle directories exist!');
     set(h.angles,'Value',0); 
     callback_exp(h.exp,[],'init');
     angle = '';

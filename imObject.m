@@ -203,6 +203,8 @@ methods
         % Save the object and the children
         save(imFile,'-mat','obj');
 
+        % TODO: add cleanup utility for removing extra . folders
+        
         % Enable the figure
         obj.progress;
     end
@@ -232,16 +234,13 @@ methods
     function saveChildren(obj)
         % Gather the figure handles, return if empty
         h = obj.children(ishandle(obj.children));
-
+        if isempty(h); return; end
+        
         % Define the path for saving figures
         pth = obj.imObjectPath;
         [~,fn,~] = fileparts(obj.imObjectName);
         figpath = [pth,filesep,'.',fn];
-        
-        % Remove existing directory and return if no children exist
-        if isdir(figpath); rmdir(figpath,'s'); end
-        if isempty(h); return; end
-               
+
         % Create the direcotry
         mkdir(figpath); 
         fileattrib(figpath,'+h')
@@ -254,7 +253,6 @@ methods
             obj.figures{i} = figname;
             fileattrib(figname,'+h');
         end  
-
     end
     
     % PROGRESS: Toggles the funtionallity of the imObject on and off
@@ -267,7 +265,7 @@ methods
             
         % Enable handles    
         else
-            idx = ishandle(obj.hprog);;
+            idx = ishandle(obj.hprog);
             set(obj.hprog(idx),'enable','on');
             obj.hprog = [];
         end
