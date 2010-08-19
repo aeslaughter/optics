@@ -26,6 +26,7 @@ end
 properties (SetAccess = private)   
     version = 0.1; % Uses this to check for updates
     verdate = 'August 18, 2010';
+    handles = imObject.empty; % Initilize the imObject handles
 end
 
 % DEFINE THE PRIVATE, UNSAVED PROPERTIES
@@ -35,7 +36,6 @@ properties (SetAccess = private, Transient = true)
     password = 'snowoptics';
     thedir = '/pub/snow/optics';
     extensions = {'.jpg','.bip','.bil'}; % File extensions to allow
-    handles = imObject.empty; % Initilize the imObject handles
 end
 
 % DEFINE THE METHODS
@@ -187,7 +187,8 @@ methods
         spec = {'*.sws','MATLAB snow optics workspace (*.sws)'};
         filename = gatherfile('put','LastUsedWorkSpaceDir',spec,filename);
         if isempty(filename); return; end 
-        
+        [pth,fn,ext] = fileparts(filename);
+         
         % Remove invalid (delete) imObjects
         idx = isvalid(obj.handles);
         obj.handles = obj.handles(idx);
@@ -197,13 +198,12 @@ methods
         obj.position = get(obj.fig,'position');
                      
 %         % Remove . directory if it exits
-%         [pth,fn] = fileparts(filename);
 %         dotdir = [pth,filesep,'.',fn];
 %         if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
         
         % Save the optics object
         obj.opticsPath = pth;
-        obj.opticsFile = [fname,ext];
+        obj.opticsFile = [fn,ext];
         save(filename,'-mat','obj');
     end
     
