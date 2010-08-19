@@ -37,18 +37,20 @@ properties % Public properties
     % Set general imObject options (a value must be assigned)
     workNorm = true;
     spectralon = true;
-    regionPrompt = true;
+    regionPrompt = true;    
+    
+    % List of figures associated with imObject
+    figures = {}; % List of figure names
 end 
    
 % DEFINE THE PRIVIATE PROPERTIES OF THE imObject CLASS
-properties (SetAccess = private)
+properties (SetAccess = private, Transient = true)
     imhandle; % Handle of the imtool window
     imaxes;   % Handle to the image axis
     plugins;  % Handles to the plugin object(s)
     ovhandle; % Handle of the overview window
     hprog;    % Handles for toggling imObject functionallity 
     children; % Handles of figures to save
-    figures = {}; % List of figure names
 end
 
 % DEFINE THE DYNAMIC METHODS FOR THE imObject CLASS
@@ -197,17 +199,17 @@ methods
         obj.imObjectName = [F,E];
         obj.imObjectPath = P;
         set(imgcf,'Name',[F,E,' (',imF,imE,')']);
-        
+               
         % Save the object and the children
-        obj.saveChildren;    
         save(imFile,'-mat','obj');
-        
+
         % Enable the figure
         obj.progress;
     end
     
     % SAVEOBJ: operates with the imObject is being saved
     function obj = saveobj(obj)
+
         % Update the positions
         set(obj.imhandle,'Units','normalized');
         obj.imposition = get(obj.imhandle,'position');
@@ -215,8 +217,8 @@ methods
             obj.ovposition = get(obj.ovhandle,'position');
         end
         
-        % Saves the imObjects children figures
-             
+		% Save the children
+        obj.saveChildren;
     end
         
     % ADDCHILD: keeps track of figures created using the plugin
@@ -230,7 +232,6 @@ methods
     function saveChildren(obj)
         % Gather the figure handles, return if empty
         h = obj.children(ishandle(obj.children));
-        disp('saveChildren');
 
         % Define the path for saving figures
         pth = obj.imObjectPath;
@@ -252,7 +253,8 @@ methods
             hgsave(h(i),figname); 
             obj.figures{i} = figname;
             fileattrib(figname,'+h');
-        end   
+        end  
+
     end
     
     % PROGRESS: Toggles the funtionallity of the imObject on and off
@@ -306,10 +308,10 @@ methods (Static)
         obj.startup; % Initilizes the image (as created)
 
         % Restore regions
-        for i = 1:length(obj.work); obj.work(i).createregion; end
-        for i = 1:length(obj.white); obj.white(i).createregion; end
-        for i = 1:length(obj.point); obj.point(i).createregion; end
-        
+        for i = 1:length(obj.work); obj.work(i).createregion(obj); end
+        for i = 1:length(obj.white); obj.white(i).createregion(obj); end
+        for i = 1:length(obj.point); obj.point(i).createregion(obj); end
+
         % Open the figures
         for i = 1:length(obj.figures);
            obj.children(i) = hgload(obj.figures{i}); 
@@ -447,6 +449,7 @@ for i = 1:length(f);
 end
           
 % CREATE THE MENU AND PUSHTOOL CONTROLS 
+if k == 1; plugin = imPlugin.empty; return; end  % No imPlugins were found
 [~,Mix] = sort(Morder); % Re-orders the menu items
 [~,Pix] = sort(Porder); % Re-orders the pushtool items
 
@@ -498,5 +501,5 @@ function callback_closefcn(hObject,~)
     end
     delete(obj.plugins); 
     cur = findobj('Name','Plugin Preferences'); delete(cur);
-    delete(obj);
+    if isvalid(obj); delete(obj); end
 end

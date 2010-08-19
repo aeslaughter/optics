@@ -35,10 +35,9 @@ function callback_live(hObject,~,p)
 
 % GATHER INFORMATION FROM THE GUI
 h = guihandles(hObject);
-imObj = p.parent;
+imObj = guidata(hObject);
 M = get(h.LiveMenu,'Checked');
 data = reshape(imObj.getImage,imObj.imsize);
-set(h.LiveMenu,'UserData',data);
 
 % TOGGLE THE MENUS AND BUTTONS
 if strcmpi(M,'off');
@@ -58,8 +57,7 @@ if strcmpi(B,'off');
 end
 
 % IF THE DOES NOT EXIST CREATE THE FIGURE
-% fig = get(h.LiveButton,'UserData');
-fig = findobj('Name','Live Spectrum');
+fig = findobj('Tag','LiveHSIViewer'); 
 if isempty(fig) || ~ishandle(fig);
     % Disable figure
     imObj.progress;
@@ -84,17 +82,18 @@ if isempty(fig) || ~ishandle(fig);
     % Setup the handle for the live view line
     hL = findobj(ax,'Type','Line');
     set(hL,'Tag','LiveLine','Visible','off');
-    imObj.addChild(fig); % Adds the figure for saving
-    
+%     imObj.addChild(fig); % Adds the figure for saving
+
     % Enable figure
     imObj.progress;
 end
 
 % DEFINE THE APPROPRIATE CALLBACKS FOR OPERATING THE LIVE VIEW
-set(imgcf,'Units','pixels','WindowButtonMotionFcn',...
+    set(imgcf,'Units','pixels','WindowButtonMotionFcn',...
         {@callback_mouse,p,false},'Pointer','fullcrosshair',...
         'Interruptible','off','WindowButtonDownFcn',...
-        {@callback_mouse,p,true});
+        {@callback_mouse,p,true});    
+    guidata(fig,data);
 
 %--------------------------------------------------------------------------
 function callback_mouse(hObject,~,p,click)
@@ -102,9 +101,9 @@ function callback_mouse(hObject,~,p,click)
 
 % GATHER INFORMATION FROM THE GUI
 h = guihandles(hObject);
-imObj = p.parent;
+imObj = guidata(hObject);
 fig = findobj('Tag','LiveHSIViewer');
-data = get(h.LiveMenu,'UserData');
+data = guidata(fig);
 
 % TURN OFF THE LIVE SPECTRUM IF THE FIGURE DOES NOT EXIST
 if isempty(fig) || ~ishandle(fig);
@@ -166,7 +165,7 @@ hp.setColor(C);
 if p.Pref(3).Value; R.addlabel(label); end
 
 %--------------------------------------------------------------------------
-function callback_deleteFig(hObject,~,p)
+function callback_deleteFig(~,~,p)
 % CALLBACK_DELETEFIG is called when the Live Spectrum window is deleted
 
 % Remove the points and toggle the viewer off (if imObject still exists)
@@ -174,6 +173,8 @@ if isvalid(p);
     p.parent.removeRegion('point');
     h = guihandles(p.parent.imhandle);
     callback_live(h.LiveMenu,[],p);
+    set(p.parent.imhandle,'WindowButtonMotionFcn','',...
+        'WindowButtonDownFcn','','Pointer','arrow','Units','Normalized');
 end
  
 % Remove the live view figure

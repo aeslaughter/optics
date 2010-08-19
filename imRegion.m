@@ -10,7 +10,6 @@ classdef imRegion < hgsetget
     
 % DEFINE THE PUBLIC PROPERTIES    
 properties
-    parent; % Handle of the parent imObject
     position; % Position of the region
     type = 'work'; % Type of region (used to define color)
     func = 'imrect'; % Function defining the shape of region to create
@@ -20,7 +19,8 @@ properties
 end
 
 % DEFINE THE PRIVE PROPERTIES
-properties (SetAccess = private)
+properties (SetAccess = private, Transient = true)
+    parent; % Handle of the parent imObject
     texthandle; % Handle of the the text object created 
     imroi; % Handle of the imroi region created
 end
@@ -58,7 +58,10 @@ methods
     end
     
     % CREATEREGION: builds the imroi region
-    function obj = createregion(obj)
+    function obj = createregion(obj,varargin)
+        % imObject handle is input when loading regions
+        if nargin == 2; obj.parent = varargin{1}; end
+        
         % Define the region using the im* functions  
         ax = obj.parent.imaxes;
         if ~isempty(obj.position);

@@ -27,7 +27,7 @@ properties % Public properties
 end
   
 % SET THE PRIVATE PROPERTIES OF THE CLASS
-properties (SetAccess = private)
+properties (SetAccess = private, Transient = true)
     parent; % Handle for the parent imObject
 end
 

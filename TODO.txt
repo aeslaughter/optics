@@ -1,6 +1,6 @@
 TODO:
--save live view figure also saves the imObject, likely due to the use of 
-the imObject handle in the callbacks
+-saveobj is being called twice, and the saving of live view causes the 
+imObject to be saved as a fig file (I don't know why)
 
 -Debug Control GUI folder selecting, missing files and such...
 
