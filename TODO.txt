@@ -12,8 +12,6 @@ imObject to be saved as a fig file (I don't know why)
 
 -Remove empty <.name> directories
 
--Test the default implugin settings
-
 -Complete m-file documentation
 
 -Complete LaTeX documentation

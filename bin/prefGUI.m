@@ -65,14 +65,11 @@ for i = 1:length(c);
     
     % Update the enable/disable
 %     user = get(c(i),'UserData');
-%     if ~isempty(imObj.type) && sum(strcmpi(imObj.type,user)) == 0;
+%     if ~isempty(imObj.type) && any(strcmpi(imObj.type,user));
 %         set(c(i),'enable','off');
 %     end
 %     
 end
-    
-
-
 
 %--------------------------------------------------------------------------
 function output = callback_general(hObject,~)
@@ -157,8 +154,9 @@ function callback_select(hObject,~)
             loc = loc - 0.075; % Updates the position
         end
     end
+    
 % Determine the enable status for the save/load/clear default buttons
-    if ~ispref('implugin',p.plugin);
+    if ~ispref('imPlugin',p.plugin);
         enable = 'off';
     else
         enable = 'on';
