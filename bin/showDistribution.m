@@ -27,8 +27,8 @@ function h = showDistribution(R,varargin)
     opt = gatheruseroptions(opt,varargin{:});
 
 % 2 - DEFINE THE IMOBJECT HANDLE AND DISABLE THE FIGURE(s)
-    R(1).parent.progress;
-  
+    hwait = waitdlg('Performing PDF calculations, please wait...');
+    
 % 3 - SEPERATE THE REGIONS AND COMPUTE THE EPDF FUNCTIONS    
     % 3.1 - Prepare for computing regions
     N = length(R);              % The number of regions
@@ -62,7 +62,7 @@ function h = showDistribution(R,varargin)
 
         % 3.2.3 - Compute the mean distributions
         else
-            data = mean(data,2); 
+            data = mean(data,2);
             data = data(mask);
             [~,fname,ext] = fileparts(R(i).parent.filename);
             a.legend{i} = [fname,ext,':',R(i).type,':',...
@@ -92,8 +92,8 @@ function h = showDistribution(R,varargin)
     % 4.3 - Produce the graph
     h = XYscatter(xi,f,'advanced',a);  
     
-% 5 - ENABLE THE FIGURE
-    R(1).parent.progress;
+% 5 - CLOSE THE WAIT DIALOG
+    delete(hwait);
        
 %--------------------------------------------------------------------------
 function L = HSIlabels(opt)

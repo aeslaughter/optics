@@ -24,7 +24,7 @@ function h = showSpectrum(R,varargin)
     if opt.stddev; opt.ci = false; end % Turns off C.I. for standard dev
 
 % 2 - COLLECT PARENT IMOBJECT HANDLES AND DISABLE THE IMAGES
-    R(1).parent.progress;
+    hwait = waitdlg('Performing spectrum calculations, please wait...');
 
 % 3 - CYCLE THROUGH REGIONS AND GATHER THE SPECTRUM DATA
 C = {};
@@ -82,10 +82,10 @@ end
   
     % 5.2 - Turn-on handle visibility of imObjects
     set(imhandle,'HandleVisibility','on');
-
-% 6 - RE-ENABLE THE IMOBJECTS
-    R(1).parent.progress;
-
+    
+% 6 - CLOSE THE WAIT DIALOG
+    delete(hwait);
+    
 %--------------------------------------------------------------------------
 function plotCI(x,CI,ax,type)
 % PLOTCI graphs the confidence level intervals on the figure

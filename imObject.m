@@ -103,7 +103,7 @@ methods
             otherwise; % Opens a traditional image file
                 data = single(imread(obj.filename));
         end
-       
+
         % Re-shape the data into columns
         c = obj.imsize;
         data = reshape(data,[],c(3));
@@ -118,7 +118,7 @@ methods
             for i = 1:c(3);
                 data(:,i) = data(:,i)./obj.norm(i);
             end
-        end   
+        end
     end
     
     % CALCNORM: Computes normalization vector from white region(s)
@@ -202,15 +202,20 @@ methods
         
         % Update the imtool name
         [~,imF,imE] = fileparts(obj.filename);  
-        [P,F,E] = fileparts(imFile);
-        obj.imObjectName = [F,E];
-        obj.imObjectPath = P;
-        set(imgcf,'Name',[F,E,' (',imF,imE,')']);
+        [pth,fn,ext] = fileparts(imFile);
+        obj.imObjectName = [fn,ext];
+        obj.imObjectPath = pth;
+        set(imgcf,'Name',[fn,ext,' (',imF,imE,')']);
                
         % Save the object and the children
         save(imFile,'-mat','obj');
 
-        % TODO: add cleanup utility for removing extra . folders
+        % Clear the dot directory
+        dotdir = [pth,filesep,'.',fn];
+        clearDotDir(dotdir);     
+        
+		% Save the children
+        obj.saveChildren;
         
         % Enable the figure
         obj.progress;
@@ -224,9 +229,6 @@ methods
         if ishandle(obj.ovhandle);
             obj.ovposition = get(obj.ovhandle,'position');
         end
-        
-		% Save the children
-        obj.saveChildren;
     end
         
     % ADDCHILD: keeps track of figures created using the plugin
@@ -241,15 +243,15 @@ methods
         % Gather the figure handles, return if empty
         h = obj.children(ishandle(obj.children));
         if isempty(h); return; end
-        
+                
         % Define the path for saving figures
         pth = obj.imObjectPath;
         [~,fn,~] = fileparts(obj.imObjectName);
         figpath = [pth,filesep,'.',fn];
 
         % Create the direcotry
-        mkdir(figpath); 
-        fileattrib(figpath,'+h')
+        if ~exist(figpath,'dir'); mkdir(figpath); end 
+        fileattrib(figpath,'+h');
 
         % Loop through the handles and save the .fig files
         obj.figures = {};
@@ -265,7 +267,7 @@ methods
     function progress(obj,varargin)
         % Disable handles
         if isempty(obj.hprog)
-            obj.hprog = findobj('enable','on');
+            obj.hprog = findobj(obj.imhandle,'enable','on');
             set(obj.hprog,'enable','off');
             drawnow;
             
@@ -320,7 +322,6 @@ methods (Static)
         for i = 1:length(obj.figures);
            obj.children(i) = hgload(obj.figures{i}); 
         end 
-
     end
 end % ends static methods
 end % ends the main classdef

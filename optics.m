@@ -192,15 +192,22 @@ methods
         % Remove invalid (delete) imObjects
         idx = isvalid(obj.handles);
         obj.handles = obj.handles(idx);
+      
+        % Remove . directory if it exits
+        dotdir = [pth,filesep,'.',fn];
+        clearDotDir(dotdir);  
+          
+        % Save the children .figs
+        for i = 1:length(obj.handles);
+            obj.handles(i).imObjectName = fn;
+            obj.handles(i).imObjectPath = pth;
+            obj.handles(i).saveChildren;
+        end
         
         % Update the control window position
         set(obj.fig,'Units','normalized');
         obj.position = get(obj.fig,'position');
-                     
-%         % Remove . directory if it exits
-%         dotdir = [pth,filesep,'.',fn];
-%         if exist(dotdir,'dir'); rmdir(dotdir,'s'); end
-        
+
         % Save the optics object
         obj.opticsPath = pth;
         obj.opticsFile = [fn,ext];
@@ -270,7 +277,6 @@ methods (Static)
         end
         
         obj.startup; % Initilizes the image (as created)
-        
     end
 end % ends static methods
 end
