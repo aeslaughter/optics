@@ -4,18 +4,12 @@ imObject to be saved as a fig file (I don't know why)
 
 -Optics workspace not saving .fig files
 
--Add standard deviation spectrum for HSI files
-
 -Debug Control GUI folder selecting, missing files and such...
 
 -Enable the use of local directory only (add as optics option)
 
 -Remove empty <.name> directories
 
--Remove empty <.name> directories
-
--Test the default implugin settings
 -Complete m-file documentation
--Complete LaTeX documentation
 
--Re-write im* classdef file as hgsetget types, using the set.<property> methods thus avoiding the need for the loadobj
+-Complete LaTeX documentation

@@ -17,9 +17,11 @@ function h = showSpectrum(R,varargin)
     opt.ci = true;
     opt.citype = 'shaded';
     opt.civalue = 5;
+    opt.stddev = false; % Computes standard deviation of spectrum
 
     % 1.2 - Gather the user supplied settings
     opt = gatheruseroptions(opt,varargin{:});
+    if opt.stddev; opt.ci = false; end % Turns off C.I. for standard dev
 
 % 2 - COLLECT PARENT IMOBJECT HANDLES AND DISABLE THE IMAGES
     R(1).parent.progress;
@@ -36,19 +38,27 @@ for i = 1:length(R);
     % 3.2 - Gather the imObject image handles
     imhandle(i) = R(i).parent.imhandle;
 
-    % 3.3 - Build a cell array of the x,y data
-    y = nanmean(data)'; 
+    % 3.3 - Determine the x,y data
     x = R(i).parent.info.wavelength;
+        
+    % 3.5 - Compute the standard devation, if desired 
+    if opt.stddev;
+       y = nanstd(data)';
+    else
+       y = nanmean(data)';
+    end
+
+    % 3.6 - Build output array of x,y data
     C = [C,x,y];
     
-    % 3.4 - Build the legend
+    % 3.7 - Build the legend
     [~,fn,ext] = fileparts(R(i).parent.filename);
     a.legend{i} = [fn,ext,':',R(i).type,':',R(i).label];
     
-    % 3.5 - Compute the perctile data if desired
+    % 3.8 - Compute the perctile data if desired
     if opt.ci;
        CI{i} = prctile(data,[opt.civalue, 100-opt.civalue])';
-    end  
+    end   
 end
 
 % 4 - GRAPH THE MEAN SPECTRUMS
