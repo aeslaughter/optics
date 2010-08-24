@@ -11,7 +11,6 @@ function h = showSpectrum(R,varargin)
 % 1 - DEFINE THE USER OPTIONS (note, the defaults prescribed here does not
 % get used by im_distributions.m; they are included for completeness as
 % this function may be used by itself)
-
     % 1.1 - Defnine the default values
     opt.width = 5;
     opt.height = 3;
@@ -29,17 +28,24 @@ function h = showSpectrum(R,varargin)
 C = {};
 for i = 1:length(R);
     % 3.1 - Reshape the data such that size = [npixels,wavelenghts]
-    data = R(i).parent.getImage;
+    data = R(i).parent.getImage(R(i).type); 
+    mask = R(i).getRegionMask;
+    if isempty(mask); break; end
+    data(~mask,:) = NaN;
     
-    % Build a cell array of the x,y data
+    % 3.2 - Gather the imObject image handles
+    imhandle(i) = R(i).parent.imhandle;
+
+    % 3.3 - Build a cell array of the x,y data
     y = nanmean(data)'; 
     x = R(i).parent.info.wavelength;
     C = [C,x,y];
     
-    % Build the legend
-    a.legend{i} = [R(i).parent.filename,':',R(i).type,':',R(i).label];
+    % 3.4 - Build the legend
+    [~,fn,ext] = fileparts(R(i).parent.filename);
+    a.legend{i} = [fn,ext,':',R(i).type,':',R(i).label];
     
-    % Compute the perctile data if desired
+    % 3.5 - Compute the perctile data if desired
     if opt.ci;
        CI{i} = prctile(data,[opt.civalue, 100-opt.civalue])';
     end  
@@ -53,14 +59,19 @@ end
     a.name = 'Region Spectrum(s)';
     a.size = [opt.width, opt.height];
     
-    % 4.2 - Graph the data
+    % 4.2 - Turn-off imObject visibility
+    set(imhandle,'HandleVisibility','off');
+    
+    % 4.3 - Graph the data
     [h,ax] = XYscatter(C,'advanced',a);
          set(h,'NextPlot','add');
 
 % 5 - GRAPH THE CONFIDENCE INTERVALS (if desired)
-if opt.ci;
-    plotCI(x,CI,ax,opt.citype);
-end
+    % 5.1 - Produce the confidence intervals
+    if opt.ci; plotCI(x,CI,ax,opt.citype); end
+  
+    % 5.2 - Turn-on handle visibility of imObjects
+    set(imhandle,'HandleVisibility','on');
 
 % 6 - RE-ENABLE THE IMOBJECTS
     R(1).parent.progress;
@@ -90,7 +101,7 @@ switch type
             X = [x; x(end); flipud(x)]; % Y-vertices
             user = get(hline(i),'UserData'); % User data of current line
             user.patch = patch(X,Y,get(hline(i),'Color'),... %Plot vertices
-                'EdgeColor','none','FaceAlpha',0.25);
+                'EdgeColor','none','FaceAlpha',0.25,'HitTest','off');
             set(hline(i),'UserData',user); % Update line user data
             ymax = max(Y); % Max of CIs
             ymin = min(Y); % Min of CIs

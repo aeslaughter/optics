@@ -73,6 +73,7 @@ methods
         obj.imroi = h; % Assigns the region handle to the imroi property
 
         % Set the color and limit the region to the image extents
+        if ~isvalid(h); return; end
         setColor(h,obj.color);
         fcn = makeConstrainToRectFcn(obj.func,get(ax,'XLim'),...
             get(imgca,'YLim'));
@@ -87,7 +88,9 @@ methods
         end
     end     
     % GETREGIONMASK: returns an image mask
+    
     function mask = getRegionMask(obj)
+        if ~isvalid(obj.imroi); mask = []; return; end
         mask = createMask(obj.imroi); % The image mask of the region
         mask = reshape(mask,[],1); % Organizes the mask in columns 
     end

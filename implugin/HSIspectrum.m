@@ -58,9 +58,3 @@ function callback_spec(hObject,~,p)
 % 3 - COMPARE THE REGIONS
     h = showSpectrum(R,opt); 
     imObj.addChild(h);
-    
-
-
-
-
-

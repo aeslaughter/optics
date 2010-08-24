@@ -212,6 +212,7 @@ methods
         % Load the *.sws file
         spec = {'*.sws','MATLAB snow optics workspace (*.sws)'};
         filename = gatherfile('get','LastUsedWorkSpaceDir',spec);
+        if isempty(filename); return; end
         oldObj = obj;
         tmp = load(filename,'-mat'); obj = tmp.obj;
             

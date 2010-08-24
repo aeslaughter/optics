@@ -107,7 +107,7 @@ methods
         % Re-shape the data into columns
         c = obj.imsize;
         data = reshape(data,[],c(3));
-        
+
         % If the 'raw' or 'white' tags are used, ignore normalizing
         if nargin == 2 && strcmpi(varargin{1},'raw') ...
                 || nargin == 2 && strcmpi(varargin{1},'white');
@@ -144,24 +144,31 @@ methods
 
         % Update the normalization property
         obj.norm = mean(theNorm,1);
-        
+
         % Apply HSI spectralon reference, if desired
-        if sum(strcmpi({'HSI'},obj.type)) == 1 && obj.spectralon;
+        if any(strcmpi({'HSI'},obj.type)) && obj.spectralon;
             data = dlmread('teflon.txt');
             yi = interp1(data(:,1),data(:,2),...
-                obj.info.wavelength,'spline','extrap');
+                obj.info.wavelength,'linear','extrap');
             obj.norm = obj.norm.*yi';
         end
-        
+
         % Restore functionality
         obj.progress
+    end
+     
+    % SET.SPECTRALON: Operates when imObject preference is toggled
+    function obj = set.spectralon(obj,input)
+        obj.spectralon = input;
+        obj.calcNorm;
     end
     
     % CREATEREGION: gathers/creates regions via the imRegion class
     function R = createRegion(obj,type,func,varargin)
         % Create the region
         R = imRegion(obj,type,func,varargin{:}); 
-
+        if ~isvalid(R.imroi); return; end
+        
         % Add the region to the imObject
         n = length(obj.(type)) + 1; 
         obj.(type)(n) = R;
@@ -211,7 +218,6 @@ methods
     
     % SAVEOBJ: operates with the imObject is being saved
     function obj = saveobj(obj)
-
         % Update the positions
         set(obj.imhandle,'Units','normalized');
         obj.imposition = get(obj.imhandle,'position');
