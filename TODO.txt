@@ -1,5 +1,5 @@
 TODO:
--Debug Control GUI folder selecting, missing files and such...
+-Debug Control GUI
 
 -Complete m-file documentation
 
