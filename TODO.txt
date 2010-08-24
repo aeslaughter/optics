@@ -1,8 +1,6 @@
 TODO:
 -Debug Control GUI folder selecting, missing files and such...
 
--Enable the use of local directory only (add as optics option)
-
 -Complete m-file documentation
 
 -Complete LaTeX documentation

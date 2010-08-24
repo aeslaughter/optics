@@ -15,11 +15,14 @@ properties
     opticsPath = ''; % Path of savde workspace
     opticsFile = ''; % Filename of saved workspace (*.sws)
     
+    % List of user preferences
+    pref = {'keeplocal','appendWorkspace','target','useftp'};
+    
     % Define the user preferences
-    pref = {'keeplocal','appendWorkspace','target'}; % List of option props
     keeplocal = true;           % Toggle for saving/removing local files
     appendWorkspace = true;     % Toggle for clearing exiting files 
     target = 'database';        % The location of the image database
+    useftp = true ;             % Toggle for using ftp site
 end
 
 % DEFINE THE PRIVATE PROPERTIES
@@ -44,21 +47,20 @@ methods
     function obj = optics
         addpath('bin');
         obj.fig = open('controlGUI.fig'); % Opens the GUI
-        obj.startup; % Initlizes the optics class
+        initControlGUI(obj);
     end
     
-    % STARTUP: initilizes the optics class
-    function obj = startup(obj)
-       % Connect to the ftp site
-        try
-            obj.FTP = ftp(obj.host,obj.username,obj.password);
-            cd(obj.FTP,obj.thedir);
-        catch
-            warndlg('Failed to connect to the FTP server!');
-        end
-            
-       % Initilize the GUI
-       initControlGUI(obj);
+    % SET.USEFTP: operates when the user changes the value of useftp
+    function obj = set.useftp(obj,value)
+        % Set the new value
+        obj.useftp = value;
+        
+        % Connect to the ftp site, if true
+        if obj.useftp; connectFTP(obj); end
+        
+        % Update the GUI
+        h = guihandles(obj.fig);
+        callback_exp(h.exp,[],'init');
     end
     
     % SETPREF: changes the current optics preferencs
@@ -97,8 +99,6 @@ methods
         for i = 1:length(p);
             if ispref('OpticsOptions',p{i});
                 obj.(p{i}) = getpref('OpticsOptions',p{i});
-            else % create if it does not already exist
-                setpref('OpticsOptions',p{i},obj.(p{i}));
             end
         end
         
@@ -120,13 +120,17 @@ methods
     function obj = getFiles(obj)
         % Gather the gui handles and existing images files
         h = guihandles(obj.fig);
-        data = dir(obj.FTP,[obj.thepath,'/*.*']);
+        if obj.useftp;
+            data = dir(obj.FTP,[obj.thepath,'/*.*']);
+        else
+            data = dir([obj.target,'/',obj.thepath,'/*.*']);
+        end
         
         % Cycle through each file and build a list of images only
         list = {}; k = 1;
         for i = 1:length(data);
             [~,~,e] = fileparts(data(i).name);
-            if sum(strcmpi(e,obj.extensions)) == 1
+            if any(strcmpi(e,obj.extensions))
                 list{k} = data(i).name;
                 k = k + 1;
             end
@@ -147,34 +151,13 @@ methods
         str = get(h.images,'String');
         files = str(get(h.images,'Value'));
 
-        % Change the directory to the current folder and build local path
-        cd(obj.FTP,obj.thepath);
-        localpath = regexprep(obj.thepath,'/',filesep);
-        localpath = [obj.target,filesep,localpath];
-        
-        % Create the local directory if it does not exist
-        if ~exist(localpath,'dir');
-            mkdir(localpath);
+        % Open the images
+        if obj.useftp;
+            openRemote(obj,files);
+        else
+            openLocal(obj,files);
         end
-        
-        % Cylce through the images and download to local directory
-        d = waitdlg('Opening/downloading images, please wait...');
-        for i = 1:length(files);
-            filename = [localpath,filesep,files{i}];
-            [~,~,ext] = fileparts(filename);
-            if ~exist(filename,'file');
-                mget(obj.FTP,files{i},localpath);
-                if strcmpi('.bil',ext) || strcmpi('.bip',ext);
-                    mget(obj.FTP,[files{i},'.hdr'],localpath);
-                end
-            end
-            obj.handles(end+1) = imObject(filename);  
-        end
-        if ishandle(d); delete(d); end
-        
-        % Return the ftp directory to the base
-        cd(obj.FTP,obj.thedir);
-        
+
         % Update the imObject handle list
         idx = isvalid(obj.handles);
         obj.handles = obj.handles(idx);
@@ -234,9 +217,6 @@ methods
             delete(obj.handles(idx));
             set(obj.fig,'Units','normalized','Position',newObj.position);
         end
-        
-        % Update the workspace file information and update the folders
-        %obj.updateFolders;
     end
        
     % CLOSEOPTICS: operates when the GUI is being closed
@@ -276,7 +256,7 @@ methods (Static)
             set(obj.fig,'Units','Normalized','Position',obj.position);
         end
         
-        obj.startup; % Initilizes the image (as created)
+        initControlGUI(obj); % Initilizes the image (as created)
     end
 end % ends static methods
 end
@@ -319,8 +299,25 @@ obj.getdefaultPref;
 % Set the version propertery
 setpref('OpticsObject','version',{obj.version,obj.verdate});
 
+% Connect the the FTP server
+if obj.useftp; connectFTP(obj); end
+
 % Intilize the GUI by calling the experiment folder callback
 callback_exp(h.exp,[],'init');
+end
+
+%--------------------------------------------------------------------------
+function connectFTP(obj)
+% CONNECTFTP connects the user to the FTP server
+try
+    obj.FTP = ftp(obj.host,obj.username,obj.password);
+    cd(obj.FTP,obj.thedir);
+catch
+    msg = ['Failed to connect to the FTP server!',...
+        ' The local directory is being used.'];
+    warndlg('Failed to connect to the FTP server!');
+    obj.useftp = false;
+end
 end
 
 %--------------------------------------------------------------------------
@@ -332,7 +329,12 @@ obj = guidata(hObject);
 h = guihandles(hObject);
 
 % Gather the folder structure from the FTP site
-data = struct2cell(dir(obj.FTP));
+if obj.useftp
+    data = struct2cell(dir(obj.FTP));
+else
+    data = getLocalFolderData(obj.target);
+end
+
 str = data(1,:);
 set(hObject,'String',str);
 
@@ -353,8 +355,16 @@ obj = guidata(hObject);
 h = guihandles(hObject);
 
 % Gather the folder structure from the FTP site
-data = struct2cell(dir(obj.FTP,obj.exp));
-idx = cell2mat(data(3,:)); % Only considers folders
+if obj.useftp
+    data = struct2cell(dir(obj.FTP,obj.exp));
+    loc = 3;
+else
+    data = getLocalFolderData([obj.target,filesep,obj.exp]);
+    loc = 4;
+end
+
+% Only considers folder
+idx = cell2mat(data(loc,:));
 str = data(1,idx);
 set(hObject,'String',str);
 
@@ -373,10 +383,18 @@ function callback_type(hObject,~,varargin)
 % Gather the optics object
 obj = guidata(hObject);
 
-% Gather the folder structure from the FTP site
+% Gather the folder structure
 thepath = buildpath(obj.exp,obj.folder);
-data = struct2cell(dir(obj.FTP,thepath));
-idx = cell2mat(data(3,:)); % Only considers folders
+if obj.useftp
+    data = struct2cell(dir(obj.FTP,thepath));
+    loc = 3;
+else
+    data = getLocalFolderData([obj.target,filesep,thepath]);
+    loc = 4;
+end
+
+% Only consider folders
+idx = cell2mat(data(loc,:));
 str = data(1,idx);
 set(hObject,'String',str);
 
@@ -417,11 +435,13 @@ end
 function callback_pref(hObject,~)
 % CALLBACK_PREF opens the optics object preferences
 
+% Gather GUI and object information and open the pref window
 obj = guidata(hObject);
 H = findobj('Tag','OpticsOptions'); delete(H);
 H = open('opticsPrefGUI.fig'); drawnow;
 h = guihandles(H);
 
+% Cylce through each pref and update the value and callback
 for i = 1:length(obj.pref);
     p = obj.pref{i};
     if isnumeric(obj.(p)) || islogical(obj.(p));
@@ -433,6 +453,7 @@ for i = 1:length(obj.pref);
         type,obj.(p));
 end
 
+% Set the load/save callbacks
 set(h.changetarget,'callback',{@callback_changetarget,obj});
 set(h.savedef,'callback',@(src,evnt)setdefaultPref(obj));
 set(h.loaddef,'callback',@(src,evnt)getdefaultPref(obj));
@@ -467,6 +488,7 @@ end
 function angle = getAngleFolder(h,obj,varargin)
 % GETANGLEFOLDER gathers the angle, viewer, zintth folder    
 
+% 1 - INTILIZATION
 % Gather the current path based on selected folders
 thepath = buildpath(obj.exp,obj.folder,obj.type);
 
@@ -478,8 +500,15 @@ if ~isempty(obj.angle);
    a = obj.angle(end);
 end
 
-% Define the available zenith angles
-zdir = dir(obj.FTP,[thepath,'/Z*']);
+% 2 - DEFINE THE ZENITH ANGLES
+% Gather folders for available zeinth angles
+if obj.useftp;
+    zdir = dir(obj.FTP,[thepath,'/Z*']);
+else
+    zdir = dir([obj.target,filesep,thepath,'/Z*']);
+end
+
+% Return if the zeinth angle folder does not exist
 if isempty(zdir);
     disp('No angle directories exist!');
     set(h.angles,'Value',0); 
@@ -487,15 +516,28 @@ if isempty(zdir);
     angle = '';
     return;
 end
-data = struct2cell(dir(obj.FTP,[thepath,'/Z*']));
+
+% Collect the available zeith angles
+if obj.useftp
+    data = struct2cell(dir(obj.FTP,[thepath,'/Z*']));
+else
+    data = getLocalFolderData([obj.target,'/',thepath,'/Z*']);
+end
 str = char(data(1,:));
 Z = unique(cellstr(str(:,2:3)));
 set(h.zenith,'String',Z);
 val = initFolder(h.zenith,z,varargin{:});
 z = Z{val};
 
+% 3 - DEFINE THE VIEWER ANGLES
 % Define the available viewer angles
-data = struct2cell(dir(obj.FTP,[thepath,'/Z',z,'*']));
+if obj.useftp
+    data = struct2cell(dir(obj.FTP,[thepath,'/Z',z,'*']));
+else
+    data = getLocalFolderData([obj.target,'/',thepath,'/Z',z,'*']);
+end
+
+% Collect/dispaly the available viewer angles
 str = char(data(1,:));
 V = unique(cellstr(str(:,5:6)));
 set(h.viewer,'String',V);
@@ -503,8 +545,15 @@ val = initFolder(h.viewer,v,varargin{:});
 if length(V) < val; set(h.viewer,'Value',1); end
 v = V{get(h.viewer,'Value')};
 
+% 4 - DEFINE ThE AVAILALBE AZIMUTHS
 % Define the available azimuths
-data = struct2cell(dir(obj.FTP,[thepath,'/Z',z,'V',v,'*']));
+if obj.useftp
+    data = struct2cell(dir(obj.FTP,[thepath,'/Z',z,'V',v,'*']));
+else
+    data = getLocalFolderData([obj.target,'/',thepath,'/Z',z,'V',v,'*']);
+end
+
+% Gather dispaly the azimuths
 str = char(data(1,:)); 
 A = unique(cellstr(str(:,7)));
 set(h.azimuth,'String',A);
@@ -512,7 +561,7 @@ val = initFolder(h.azimuth,a,varargin{:});
 if length(A) < val; set(h.azimuth,'Value',1); end
 a = A{get(h.azimuth,'Value')};
 
-% Output the current angle folder
+% 5 - OUTPUT THE CURRENT ANGLE FOLDER
 angle = ['Z',z,'V',v,a];
 
 end
@@ -539,4 +588,69 @@ function val = initFolder(hObject,str,varargin)
         val = get(hObject,'Value');
     end
     set(hObject,'Value',val) ;
+end
+
+%--------------------------------------------------------------------------
+function openRemote(obj,files)
+% OPENREMOTE downloads and opens files from the remote FTP site
+
+% Change the directory to the desired folder
+cd(obj.FTP,obj.thepath);
+localpath = regexprep(obj.thepath,'/',filesep);
+localpath = [obj.target,filesep,localpath];
+
+% Create the local directory if it does not exist
+if ~exist(localpath,'dir');
+    mkdir(localpath);
+end
+
+% Cylce through the images and download to local directory
+d = waitdlg('Opening/downloading images, please wait...');
+for i = 1:length(files);
+    filename = [localpath,filesep,files{i}];
+    [~,~,ext] = fileparts(filename);
+    if ~exist(filename,'file');
+        mget(obj.FTP,files{i},localpath);
+        if strcmpi('.bil',ext) || strcmpi('.bip',ext);
+            mget(obj.FTP,[files{i},'.hdr'],localpath);
+        end
+    end
+    obj.handles(end+1) = imObject(filename);  
+end
+if ishandle(d); delete(d); end
+
+% Return the ftp directory to the base
+cd(obj.FTP,obj.thedir);
+end
+
+%--------------------------------------------------------------------------
+function openLocal(obj,files)
+% OPENLOCAL opens files from the local database
+
+% Change the directory to the desired folder
+localpath = [obj.target,filesep,obj.thepath];
+
+% Cylce through the images and download to local directory
+for i = 1:length(files);
+    filename = [localpath,filesep,files{i}];
+    obj.handles(end+1) = imObject(filename);  
+end
+
+end
+
+%--------------------------------------------------------------------------
+function data = getLocalFolderData(thepath)
+% GETLOCALFOLDERDATA returns the cell array for local folders
+% Gather the local folders
+
+tmp = struct2cell(dir(thepath));
+k = 1;
+for i = 1:size(tmp,2);
+    if ~strcmpi(tmp{1,i}(1),'.');
+        idx(k) = i;
+        k = k + 1;
+    end
+end
+data = tmp(:,idx);
+
 end
