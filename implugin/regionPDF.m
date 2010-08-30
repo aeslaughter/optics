@@ -10,8 +10,8 @@ p.MenuParent = 'Analysis';
 Callback = @(hObject,eventdata) callback_compare(hObject,eventdata,obj,p);
 p.MenuOptions = {'Label','Calculate Region PDF(s)'};
 
-p.MenuSubmenu{1} = {'Label','White','callback',Callback};
-p.MenuSubmenu{2} = {'Label','Work','callback',Callback};
+p.MenuSubmenu{2} = {'Label','White','callback',Callback};
+p.MenuSubmenu{1} = {'Label','Work','callback',Callback};
 
 
 % DEFINE THE PLUGIN PREFERENCES

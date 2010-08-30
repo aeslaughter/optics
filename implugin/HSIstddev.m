@@ -12,8 +12,8 @@ p.MenuParent = 'Hyperspectral';
 p.MenuOptions = {'Label','Region Std. Dev. Spectrum(s)'};
 
 % 3 - DEFINE THE SUBMENUS
-p.MenuSubmenu{1} = {'Label','White','callback',Callback};
-p.MenuSubmenu{2} = {'Label','Work','callback',Callback};
+p.MenuSubmenu{2} = {'Label','White','callback',Callback};
+p.MenuSubmenu{1} = {'Label','Work','callback',Callback};
 
 % 4 - DEFINE THE USER PREFERERNCES
 p.Pref(1).Value = '5';

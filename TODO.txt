@@ -1,4 +1,9 @@
 TODO:
+-Add imObject preference to allow for normalizing from various image(s)
+    1. prompt user to select the regions via bin\gatherRegions.m
+    2. compute the norm via imObj.calcNorm by adding on optional input 
+    that contains the R imRegion objects, and uses R.parent.getImage
+
 -Debug Control GUI
 
 -Complete m-file documentation
