@@ -19,19 +19,23 @@ end
 % 3 - PROMPT THE USER TO SELECT THE REGIONS
 R = [H(:).(type)];
 if length(R) > 1; % Prompts user
-    r = promptUser(R);
+    r = promptUser(R,currentObj.type);
 else % Case when only one region is available (don't prompt)
     r = R;
 end
 
 %--------------------------------------------------------------------------
-function r = promptUser(R)
+function r = promptUser(R,theType)
 % PROMPTUSER opens a dialog with the available regions
 
-% Build a list of the available regions
+% Build a list of the available regions (do not allow mismatch of images)
+k = 1;
 for i = 1:length(R);
     [~,fn,ext] = fileparts(R(i).parent.filename);
-    list{i} = [fn,ext,' : ',R(i).label];
+    if any(strcmpi(theType,R(i).parent.type));
+        list{k} = [fn,ext,' : ',R(i).label];
+        k = k + 1;
+    end
 end
 
 % Build the dialog

@@ -35,7 +35,7 @@ properties % Public properties
     imObjectPath = ''; % Folder used when saving imObject class
     
     % Set general imObject options (a value must be assigned)
-    workNorm = true;
+    selectNorm = true;
     spectralon = true;
     regionPrompt = true;    
     
@@ -123,22 +123,46 @@ methods
     
     % CALCNORM: Computes normalization vector from white region(s)
     function obj = calcNorm(obj)
-        % Gather white region handles        
+        % Disable the current figure
         obj.progress;
-        R = obj.white;
-        obj.norm = [];
-                
-        % Prepare the image for analysis
+        
+        % Gather white region handles        
+        if obj.selectNorm
+            R = gatherRegions('white',obj);
+            if isempty(R); 
+                warndlg('No white regions exist for selection.',...
+                    'No Regions');
+                obj.progress;
+                return; 
+            end
+        else
+            R = obj.white;
+        end
+        
+        % Initilize parameters
         r = length(R); % Number of white regions to consider
-        c = obj.imsize;
-        data = obj.getImage('raw');
-
-        % Compute the mean values of the white regions
-        theNorm = zeros(r,c(3));
-        for i = 1:r;  
-            mask = R(i).getRegionMask; 
-            for j = 1:c(3);
-                theNorm(i,j) = nanmean(data(mask,j));
+        h = NaN; % ImObject image handle
+        
+        % Cycle through the regions
+        for i = 1:length(R);
+            % Gather data  if the current region is from different region
+            if h ~= R(i).parent.imhandle;
+                c = R(i).parent.imsize;
+                data = R(i).parent.getImage('raw');
+                h = R(i).parent.imhandle;
+                
+                if i == 1; % Initilize the normal vector
+                    obj.norm = []; % Clears existing norm vector
+                    theNorm = zeros(r,c(3));    
+                end
+            end
+            
+            % Compute the mean values of the white regions 
+            for i = 1:r;  
+                mask = R(i).getRegionMask; 
+                for j = 1:c(3);
+                    theNorm(i,j) = nanmean(data(mask,j));
+                end
             end
         end
 
@@ -155,6 +179,11 @@ methods
 
         % Restore functionality
         obj.progress
+    end
+    
+    % REMOVENORM: removes any white normalization
+    function obj = removeNorm(obj)
+        obj.norm = [];
     end
      
     % SET.SPECTRALON: Operates when imObject preference is toggled
@@ -177,16 +206,12 @@ methods
         if ~strcmpi(func,'impoint');
             R.addlabel([' ',num2str(n)]); 
         end
-
-        % Update the normalize vector
-        if strcmpi('white',type); obj.calcNorm; end;
     end
     
     % REMOVEREGION: removes regions from the imObject
     function obj = removeRegion(obj,type)
         delete(obj.(type));  
         obj.(type)= imRegion.empty;
-        if strcmpi(type,'white'); obj.norm = []; end
     end
     
     % SAVEimObject: Allows user to save the imObject
@@ -410,6 +435,12 @@ w = uimenu(m,'Label','Add White Reference','Separator','on');
     uimenu(m,'Label','Clear White Reference(s)','callback',...
         @(src,event)removeRegion(obj,'white'));
     
+% DEFINE THE NORMALIZATION OPTIONS
+    uimenu(m,'Label','Apply White Normalization','callback',...
+        @(src,event)calcNorm(obj),'separator','on');  
+    uimenu(m,'Label','Remove White Normalization','callback',...
+        @(src,event)removeNorm(obj));  
+    
 % DEFINE THE WORK REGION MENUS    
 w = uimenu(m,'Label','Add Work Region','Separator','on');
     for i = 1:length(type);
@@ -428,6 +459,10 @@ w = uimenu(m,'Label','Add Work Region','Separator','on');
     uipushtool(tbar,'Cdata',icon.pref,'TooltipString',...
         'imObject Preferences','ClickedCallback',...
         @(src,event)pluginpref(obj));   
+    cdata = imread('icon\norm.png');
+    uipushtool(tbar,'Cdata',cdata,'TooltipString',...
+        'Apply White Normalization','ClickedCallback',...
+        @(src,event)calcNorm(obj));   
 end
 
 %--------------------------------------------------------------------------
