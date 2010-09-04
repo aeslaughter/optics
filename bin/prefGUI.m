@@ -10,17 +10,24 @@ function prefGUI(imobj)
 %       with a handle imobj.
 %__________________________________________________________________________
 
+% Define the preference window name
+    name = [imobj.filename,' Preferences'];
+    
 % Clear any existing plugin preference windows
-    cur = findobj('Name','Plugin Preferences'); delete(cur);
+    cur = findobj('Name',name); delete(cur);
 
 % Open the GUI generated via MATLABs guide
     H = open('prefGUI.fig'); % Opens the GUI window
     guidata(H,imobj); % Stores the imObject handle
-    set(H,'Name','Plugin Preferences'); % Set the window name
+    set(H,'Name',name); % Set the window name
     h = guihandles(H);
     
-% Apply general options
+% Apply general options and position
     set(get(h.general,'Children'),'Callback',@callback_general);
+    if ispref('imobject','LastPrefGUIPosition');
+        p = getpref('imobject','LastPrefGUIPosition');
+        set(H,'position',p);
+    end
     initGeneral(H);
     
 % Contruct a list of plugins to select from    
@@ -39,6 +46,9 @@ function prefGUI(imobj)
         'callback',@callback_savepref);
     uimenu(m,'Label','Close','separator','on','Accelerator','q',...
         'callback','close(gcf)');
+   
+% Define the close request function
+    set(H,'CloseRequestFcn',@callback_closefcn);
     
 %--------------------------------------------------------------------------
 function initGeneral(H)
@@ -334,3 +344,12 @@ switch lower(get(hObject,'Label'));
         % Update the GUI
         callback_select(h.pluginlist,[]);
 end
+
+%--------------------------------------------------------------------------
+function callback_closefcn(hObject,~)
+% CALLBACK_CLOSEFCN operates when the prefGUI is being closed
+p = get(hObject,'Position');
+setpref('imobject','LastPrefGUIPosition',p);
+delete(hObject);
+
+

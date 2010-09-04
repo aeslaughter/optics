@@ -185,13 +185,7 @@ methods
     function obj = removeNorm(obj)
         obj.norm = [];
     end
-     
-    % SET.SPECTRALON: Operates when imObject preference is toggled
-    function obj = set.spectralon(obj,input)
-        obj.spectralon = input;
-        obj.calcNorm;
-    end
-    
+
     % CREATEREGION: gathers/creates regions via the imRegion class
     function R = createRegion(obj,type,func,varargin)
         % Create the region

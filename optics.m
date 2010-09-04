@@ -45,8 +45,17 @@ end
 methods
     % OPTICS: operates on creation of optics object
     function obj = optics
+        % Add the bin path and open the optics GUI
         addpath('bin');
         obj.fig = open('controlGUI.fig'); % Opens the GUI
+        
+        % Update the position
+        if ispref('imobject','LastOpticsGUIPosition');
+            p = getpref('imobject','LastOpticsGUIPosition');
+            set(obj.fig,'position',p);
+        end
+        
+        % Initilize the control
         initControlGUI(obj);
     end
     
@@ -206,19 +215,23 @@ methods
         filename = gatherfile('get','LastUsedWorkSpaceDir',spec);
         if isempty(filename); return; end
         oldObj = obj;
+        
+        % Remove existing imObject, if desired
+        if ~obj.appendWorkspace
+            idx = isvalid(obj.handles);
+        	delete(obj.handles(idx));    
+        end
+        
+        % Load the workspace file
         tmp = load(filename,'-mat'); obj = tmp.obj;
             
         % Update the handles structure
-        if obj.appendWorkspace % adds workspace to existing
-            obj.handles = [oldObj.handles,obj.handles];
-            idx = isvalid(obj.handles);
-            obj.handles = obj.handles(idx);
+        obj.handles = [oldObj.handles,obj.handles];
+        idx = isvalid(obj.handles);
+        obj.handles = obj.handles(idx);
             
-        else % removes existing images
-            idx = isvalid(obj.handles);
-            delete(obj.handles(idx));
-            set(obj.fig,'Units','normalized','Position',newObj.position);
-        end
+        % updates the optics window position
+        set(obj.fig,'Units','normalized','Position',obj.position);
     end
        
     % CLOSEOPTICS: operates when the GUI is being closed
@@ -232,6 +245,10 @@ methods
         for i = 1:length(obj.handles);
             delete(obj.handles(i));
         end
+                
+        % Update the last used position
+        p = get(obj.fig,'Position');
+        setpref('imobject','LastOpticsGUIPosition',p);  
         
         % Delete the program control window
         delete(obj.fig);
