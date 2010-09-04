@@ -1,7 +1,4 @@
 TODO:
-- Add apply to all button in imObject preferences that applies the plugin 
-settings to each imObject
-
 -Distiguish between NIR and VIS
 
 -Debug Control GUI

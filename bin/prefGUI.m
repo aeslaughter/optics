@@ -26,7 +26,7 @@ function prefGUI(imobj)
     set(get(h.general,'Children'),'Callback',@callback_general);
     if ispref('imobject','LastPrefGUIPosition');
         p = getpref('imobject','LastPrefGUIPosition');
-        set(H,'position',p);
+        set(H,'units','normalized','position',p);
     end
     initGeneral(H);
     
@@ -173,6 +173,11 @@ function callback_select(hObject,~)
     end
 
 % Define the save/load/clear default buttons
+    btnpos = [0.025,0.085,0.50,0.05];
+    uicontrol(thepanel,'Units','Normalized','Position',btnpos,...
+        'String','Apply to all open images','FontSize',7,'Tag','set',...
+        'callback',{@callback_apply,p});
+
     btnpos = [0.025,0.025,0.30,0.05];
     uicontrol(thepanel,'Units','Normalized','Position',btnpos,...
         'String','Set as default(s)','FontSize',7,'Tag','set',...
@@ -257,6 +262,29 @@ switch action
     case 'clear'; % Removes any stored defaults
         p.clearDefaultPref;
         set([h.get,h.clear],'enable','off');
+end
+
+%--------------------------------------------------------------------------
+function callback_apply(hObject,~,P)
+% CALLBACK_APPLY applies the current preferences to all open imObjects
+
+% Determine the current preference
+h = guihandles(hObject);
+val = get(h.pluginlist,'Value');
+
+% Gather handles for other imObjects
+H = get(0,'UserData');
+
+% Loop through each imObject (should be a better way to do this)
+for i = 1:length(H);
+    H(i).plugins(val).Pref = P.Pref;
+end
+
+% Update any open plugin lists
+h = findall(0,'Tag','pluginlist');
+for i = 1:length(h);
+    fcn = get(h(i),'Callback');
+    fcn(h(i),[]);
 end
         
 %--------------------------------------------------------------------------
@@ -349,6 +377,7 @@ end
 function callback_closefcn(hObject,~)
 % CALLBACK_CLOSEFCN operates when the prefGUI is being closed
 p = get(hObject,'Position');
+set(hObject,'units','normalized');
 setpref('imobject','LastPrefGUIPosition',p);
 delete(hObject);
 
