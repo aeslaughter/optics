@@ -50,19 +50,19 @@ methods
         initControlGUI(obj);
     end
     
-    % SET.USEFTP: operates when the user changes the value of useftp
-    function obj = set.useftp(obj,value)
-        % Set the new value
-        obj.useftp = value;
-        
-        % Connect to the ftp site, if true
-        if obj.useftp; connectFTP(obj); end
-        
-        % Update the GUI
-        h = guihandles(obj.fig);
-        callback_exp(h.exp,[],'init');
+    % CONNECTFTP: connects the user to the FTP server
+    function obj = connectFTP(obj)
+        try
+            obj.FTP = ftp(obj.host,obj.username,obj.password);
+            cd(obj.FTP,obj.thedir);
+        catch
+            msg = ['Failed to connect to the FTP server!',...
+                ' The local directory is being used.'];
+            warndlg('Failed to connect to the FTP server!');
+            obj.useftp = false;
+        end
     end
-    
+
     % SETPREF: changes the current optics preferencs
     function obj = opticsPref(obj,pref)
         % Gather handle for the options GUI
@@ -117,11 +117,13 @@ methods
     end
            
     % GETFILES: gathers the image files based on the folders selected
-    function obj = getFiles(obj)
+    function obj = getFiles(obj)       
         % Gather the gui handles and existing images files
         h = guihandles(obj.fig);
         if obj.useftp;
+            obj.connectFTP;
             data = dir(obj.FTP,[obj.thepath,'/*.*']);
+            close(obj.FTP);
         else
             data = dir([obj.target,'/',obj.thepath,'/*.*']);
         end
@@ -299,25 +301,11 @@ obj.getdefaultPref;
 % Set the version propertery
 setpref('OpticsObject','version',{obj.version,obj.verdate});
 
-% Connect the the FTP server
-if obj.useftp; connectFTP(obj); end
+% % Connect the the FTP server
+% if obj.useftp; connectFTP(obj); end
 
 % Intilize the GUI by calling the experiment folder callback
 callback_exp(h.exp,[],'init');
-end
-
-%--------------------------------------------------------------------------
-function connectFTP(obj)
-% CONNECTFTP connects the user to the FTP server
-try
-    obj.FTP = ftp(obj.host,obj.username,obj.password);
-    cd(obj.FTP,obj.thedir);
-catch
-    msg = ['Failed to connect to the FTP server!',...
-        ' The local directory is being used.'];
-    warndlg('Failed to connect to the FTP server!');
-    obj.useftp = false;
-end
 end
 
 %--------------------------------------------------------------------------
@@ -330,7 +318,9 @@ h = guihandles(hObject);
 
 % Gather the folder structure from the FTP site
 if obj.useftp
+    obj.connectFTP;
     data = struct2cell(dir(obj.FTP));
+    close(obj.FTP);
 else
     data = getLocalFolderData(obj.target);
 end
@@ -356,8 +346,10 @@ h = guihandles(hObject);
 
 % Gather the folder structure from the FTP site
 if obj.useftp
+    obj.connectFTP;
     data = struct2cell(dir(obj.FTP,obj.exp));
     loc = 3;
+    close(obj.FTP);
 else
     data = getLocalFolderData([obj.target,filesep,obj.exp]);
     loc = 4;
@@ -386,8 +378,10 @@ obj = guidata(hObject);
 % Gather the folder structure
 thepath = buildpath(obj.exp,obj.folder);
 if obj.useftp
+    obj.connectFTP;
     data = struct2cell(dir(obj.FTP,thepath));
     loc = 3;
+    close(obj.FTP);
 else
     data = getLocalFolderData([obj.target,filesep,thepath]);
     loc = 4;
@@ -594,6 +588,9 @@ end
 function openRemote(obj,files)
 % OPENREMOTE downloads and opens files from the remote FTP site
 
+% Establish FTP
+obj.connectFTP;
+
 % Change the directory to the desired folder
 cd(obj.FTP,obj.thepath);
 localpath = regexprep(obj.thepath,'/',filesep);
@@ -619,8 +616,10 @@ for i = 1:length(files);
 end
 if ishandle(d); delete(d); end
 
-% Return the ftp directory to the base
-cd(obj.FTP,obj.thedir);
+% Close the FTP connection
+close(obj.FTP);
+% % Return the ftp directory to the base
+% cd(obj.FTP,obj.thedir);
 end
 
 %--------------------------------------------------------------------------

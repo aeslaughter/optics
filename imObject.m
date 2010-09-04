@@ -114,7 +114,7 @@ methods
             return;
             
         % Apply normalization, if desired    
-        elseif obj.workNorm && ~isempty(obj.norm);
+        elseif ~isempty(obj.norm);
             for i = 1:c(3);
                 data(:,i) = data(:,i)./obj.norm(i);
             end

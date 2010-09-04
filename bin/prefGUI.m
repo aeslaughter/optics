@@ -190,6 +190,7 @@ function insertcontrol(h,pos,p,idx)
 
 % Define the current preference to insert
     pref = p.Pref(idx);
+    if strcmpi(pref.Value,'NaN'); pref.Value = ''; end
 
 % Build a toggle control
 if islogical(pref.Value);

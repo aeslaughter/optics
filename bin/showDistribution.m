@@ -17,6 +17,7 @@ function h = showDistribution(R,varargin)
     opt.rgb = false;
     opt.kernel = 'epanechnikov';
     opt.npoints = 50;
+    opt.bandwidth = NaN; %auto
     opt.width = 5;
     opt.height = 3;
     opt.hsi = false;
@@ -25,6 +26,9 @@ function h = showDistribution(R,varargin)
     
     % 1.2 - Gather the user supplied settings
     opt = gatheruseroptions(opt,varargin{:});
+    
+    % 1.3 - Adjust for NaN bandwidth
+    if isnan(opt.bandwidth); opt.bandwidth = []; end
 
 % 2 - DEFINE THE IMOBJECT HANDLE AND DISABLE THE FIGURE(s)
     hwait = waitdlg('Performing PDF calculations, please wait...');
@@ -68,7 +72,7 @@ function h = showDistribution(R,varargin)
             a.legend{i} = [fname,ext,':',R(i).type,':',...
                 R(i).label];
              [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
-                'npoints',opt.npoints);
+                'npoints',opt.npoints,'width',opt.bandwidth);
        end
     end
 

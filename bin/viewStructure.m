@@ -14,7 +14,7 @@ guidata(fig,S);
 % 1.2 - Define the table
 tbl = uitable(fig,'Units','Normalized','Position',[0.05,0.05,0.9,0.9]);
 set(tbl,'ColumnName',{'Property';'Value'},'RowName',[],'Units','Pixels',...
-    'CellSelectionCallback',@callback_select);
+    'CellSelectionCallback',{@callback_select,name});
 P = get(tbl,'Position');
 
 % 1.3 - Define the export menu item
@@ -41,7 +41,7 @@ end
 set(tbl,'Data',[props,vals],'ColumnWidth',{0.3*P(3),0.65*P(3)});
 
 %--------------------------------------------------------------------------
-function callback_select(hObject,eventdata)
+function callback_select(hObject,eventdata,name)
 % CALLBACK_SELECT operates when a cell is selected.
 
 % Gather the data from the GUI
@@ -53,7 +53,7 @@ item = S.(fn{ind});
 % Display the selected data and open a new viewer for structures
 disp(item);
 if isstruct(item);
-    viewStructure(item,fn{ind});
+    viewStructure(item,[name,' ',fn{ind}]);
 end
 
 %--------------------------------------------------------------------------
