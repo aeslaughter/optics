@@ -52,7 +52,7 @@ methods
         % Update the position
         if ispref('imobject','LastOpticsGUIPosition');
             p = getpref('imobject','LastOpticsGUIPosition');
-            set(obj.fig,'position',p);
+            set(obj.fig,'units','normalized','position',p);
         end
         
         % Initilize the control
@@ -248,6 +248,7 @@ methods
                 
         % Update the last used position
         p = get(obj.fig,'Position');
+        set(obj.fig,'units','normalized');
         setpref('imobject','LastOpticsGUIPosition',p);  
         
         % Delete the program control window
