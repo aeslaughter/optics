@@ -1,4 +1,8 @@
 TODO:
+- imObject.m: add sRGB functionality
+
+-Optics.m: add an optional *.sws input
+
 -Distiguish between NIR and VIS
 
 -Debug Control GUI

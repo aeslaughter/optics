@@ -51,6 +51,7 @@ properties (SetAccess = private, Transient = true)
     ovhandle; % Handle of the overview window
     hprog;    % Handles for toggling imObject functionallity 
     children; % Handles of figures to save
+    image;    % Image data (not saved, used by VIS/NIR only)
 end
 
 % DEFINE THE DYNAMIC METHODS FOR THE imObject CLASS
@@ -101,7 +102,7 @@ methods
                 [data,~] = readBIP(obj.filename);
                 data = single(data);
             otherwise; % Opens a traditional image file
-                data = single(imread(obj.filename));
+                data = single(obj.image);
         end
 
         % Re-shape the data into columns
@@ -186,6 +187,11 @@ methods
         obj.norm = [];
     end
 
+%     % SRGB: converts the image from an sRGB
+%     function obj = sRGB(obj);
+% 
+%     end
+        
     % CREATEREGION: gathers/creates regions via the imRegion class
     function R = createRegion(obj,type,func,varargin)
         % Create the region
@@ -369,6 +375,7 @@ switch ext;
         obj.imsize = size(IM);
         obj.info = imfinfo(obj.filename);
         obj.type = {'VIS','NIR'};
+        obj.image = IM;
 end
 
 % BUILD THE IMAGE NAME
@@ -382,6 +389,7 @@ end
 
 % OPEN THE IMAGE AND ASSIGN OBJECT DATA
 h = imtool(IM); 
+
 obj.imhandle = h;
 obj.imaxes = imgca;
 guidata(h,obj);
@@ -418,10 +426,10 @@ im = uimenu(h,'Label','im&Object'); % The Regions menu
 
 % DEFINE THE REGIONS MENU
 type = {'Rectangle','Ellipse','Polygon','Freehand'}; % Sub-menu items
-m = uimenu(h,'Label','Regions'); % The Regions menu
+m = uimenu(h,'Label','Regions','Callback',{@callback_region,obj}); % The Regions menu
 
 % DEFINE THE WHITE BACKGROUND REGION MENUS
-w = uimenu(m,'Label','Add White Reference','Separator','on');
+w = uimenu(m,'Label','Add White Reference');
     for i = 1:length(type);
         uimenu(w,'Label',type{i},'callback',...
             @(src,event)createRegion(obj,'white',type{i}));
@@ -431,9 +439,9 @@ w = uimenu(m,'Label','Add White Reference','Separator','on');
     
 % DEFINE THE NORMALIZATION OPTIONS
     uimenu(m,'Label','Apply White Normalization','callback',...
-        @(src,event)calcNorm(obj),'separator','on');  
+        @(src,event)calcNorm(obj),'separator','on','Tag','ApplyWhite');  
     uimenu(m,'Label','Remove White Normalization','callback',...
-        @(src,event)removeNorm(obj));  
+        @(src,event)removeNorm(obj),'Tag','RemoveWhite');  
     
 % DEFINE THE WORK REGION MENUS    
 w = uimenu(m,'Label','Add Work Region','Separator','on');
@@ -536,4 +544,17 @@ function callback_closefcn(hObject,~)
     delete(obj.plugins); 
     cur = findobj('Name','Plugin Preferences'); delete(cur);
     if isvalid(obj); delete(obj); end
+end
+
+%--------------------------------------------------------------------------
+function callback_region(hObject,~,obj);
+% CALLBACK_REGION toggles the availabilty of apply/remove white region
+    h = guihandles(hObject);
+    if isempty(obj.norm);
+        set(h.ApplyWhite,'Enable','on'); 
+        set(h.RemoveWhite,'Enable','off');
+    else
+        set(h.ApplyWhite,'Enable','off');
+        set(h.RemoveWhite,'Enable','on');
+    end
 end

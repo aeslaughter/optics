@@ -319,9 +319,6 @@ obj.getdefaultPref;
 % Set the version propertery
 setpref('OpticsObject','version',{obj.version,obj.verdate});
 
-% % Connect the the FTP server
-% if obj.useftp; connectFTP(obj); end
-
 % Intilize the GUI by calling the experiment folder callback
 callback_exp(h.exp,[],'init');
 end

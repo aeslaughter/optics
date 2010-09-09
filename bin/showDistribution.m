@@ -46,7 +46,7 @@ function h = showDistribution(R,varargin)
     for i = 1:N;
         data = R(i).parent.getImage(R(i).type); 
         mask = R(i).getRegionMask;
-        
+
         % 3.2.1 - Compute the RGB distributions
         if opt.rgb;
             for j = 1:size(data,2);
