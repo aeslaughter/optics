@@ -13,7 +13,6 @@ function h = showDistribution(R,varargin)
 % this function may be used by itself)
 
     % 1.1 - Defnine the default values
-    opt.norm = true;
     opt.rgb = false;
     opt.kernel = 'epanechnikov';
     opt.npoints = 50;
@@ -38,7 +37,7 @@ function h = showDistribution(R,varargin)
     N = length(R);              % The number of regions
     f = zeros(opt.npoints,N);   % Initilize the output (f = prob. dens.)
     xi = f;                     % Initilize the output (xi = refl.)
-    k = 1;                      % Initlize counter for RGB option
+    k = 1;                      % Initilize counter for RGB option
     a.legend = {};              % Initilize the legend (needed for HSI)
     rgb = {'Red','Green','Blue'}; % Colors for Red/Green/Blue option
 

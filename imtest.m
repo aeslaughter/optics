@@ -6,7 +6,7 @@ clrfig;
 clc;
 
 % imObject save test
-imObj = imObject('test.bip');
-% imObj = imObject('final_small.jpg');
+% imObj = imObject('snow.jpg');
+imObj = imObject('test.jpg');
 % imObj2 = imObject('initial.jpg');
 % imObj.saveimObject('saved/test.imobj');

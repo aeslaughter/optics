@@ -54,7 +54,6 @@ function callback_compare(hObject,~,~,p)
         
 % 2 - GATHER THE OPTIONS
     % General options
-    opt.norm = imObj.workNorm;
     opt.rgb = false; % Turns off RGB option for VIS|NIR images
     opt.hsi = true; % Turns on HSI option
     

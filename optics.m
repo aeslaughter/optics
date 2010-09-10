@@ -44,19 +44,27 @@ end
 % DEFINE THE METHODS
 methods
     % OPTICS: operates on creation of optics object
-    function obj = optics
+    function obj = optics(varargin)
         % Add the bin path and open the optics GUI
         addpath('bin');
-        obj.fig = open('controlGUI.fig'); % Opens the GUI
         
-        % Update the position
-        if ispref('imobject','LastOpticsGUIPosition');
-            p = getpref('imobject','LastOpticsGUIPosition');
-            set(obj.fig,'units','normalized','position',p);
+        % Open the workspace
+        if nargin == 1;
+            obj.loadWS(varargin{:});
+            
+        % Opens the GUI    
+        else
+            obj.fig = open('controlGUI.fig');
+        
+            % Update the position
+            if ispref('imobject','LastOpticsGUIPosition');
+                p = getpref('imobject','LastOpticsGUIPosition');
+                set(obj.fig,'units','normalized','position',p);
+            end
+        
+            % Initilize the control
+            initControlGUI(obj);
         end
-        
-        % Initilize the control
-        initControlGUI(obj);
     end
     
     % CONNECTFTP: connects the user to the FTP server
@@ -209,14 +217,18 @@ methods
     end
     
     % LOADWS: operates when loading a workspace
-    function obj = loadWS(obj)
+    function obj = loadWS(obj,varargin)
         % Load the *.sws file
-        spec = {'*.sws','MATLAB snow optics workspace (*.sws)'};
-        filename = gatherfile('get','LastUsedWorkSpaceDir',spec);
-        if isempty(filename); return; end
-        oldObj = obj;
+        if nargin == 2 && exist(varargin{1},'file');
+            filename = varargin{1};
+        else
+            spec = {'*.sws','MATLAB snow optics workspace (*.sws)'};
+            filename = gatherfile('get','LastUsedWorkSpaceDir',spec);
+            if isempty(filename); return; end
+        end
         
         % Remove existing imObject, if desired
+        oldObj = obj;
         if ~obj.appendWorkspace
             idx = isvalid(obj.handles);
         	delete(obj.handles(idx));    

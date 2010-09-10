@@ -52,7 +52,6 @@ function callback_compare(hObject,~,obj,p)
         
 % 2 - GATHER THE OPTIONS
     % General options
-    opt.norm = imObj.norm;
     opt.rgb = p.Pref(1).Value;
     
     % User options via preferences

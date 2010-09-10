@@ -29,6 +29,6 @@ uicontrol(d,'Style','PushButton','Units','Normalized','Position',...
     'http://github.com/aeslaughter/optics/downloads');
 
 %--------------------------------------------------------------------------
-function checkupdates(varargin);
+function checkupdates(varargin)
 web('http://github.com/aeslaughter/optics/downloads','-browser');
 

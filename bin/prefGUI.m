@@ -72,18 +72,11 @@ for i = 1:length(c);
             val = strfind(str,imObj.(tag));
             set(c(i),'Value',val);
     end
-    
-    % Update the enable/disable
-%     user = get(c(i),'UserData');
-%     if ~isempty(imObj.type) && any(strcmpi(imObj.type,user));
-%         set(c(i),'enable','off');
-%     end
-%     
 end
 
 %--------------------------------------------------------------------------
 function output = callback_general(hObject,~)
-% APPLYGENERALOPTIONS sets the imObjects general options
+% CALLBACK_GENERAL sets the imObjects general options
 
 % Gather the imObject and current uicontrol tag
 imObj = guidata(hObject);
@@ -101,6 +94,11 @@ switch get(hObject,'Style');
         output = str{val};
 end
 imObj.(tag) = output;
+
+% Apply special functionality to general options
+switch tag
+    case 'sRGB'; imObj.sRGBconvert;
+end
 
 %--------------------------------------------------------------------------
 function buildpluginlist(H)
@@ -380,5 +378,3 @@ p = get(hObject,'Position');
 set(hObject,'units','normalized');
 setpref('imobject','LastPrefGUIPosition',p);
 delete(hObject);
-
-

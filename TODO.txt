@@ -1,9 +1,7 @@
 TODO:
-- imObject.m: add sRGB functionality
+-Add XYscatter and waitbar to bin
 
--Optics.m: add an optional *.sws input
-
--Distiguish between NIR and VIS
+-Add waitbar to sRGB
 
 -Debug Control GUI
 

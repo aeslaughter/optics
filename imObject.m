@@ -20,6 +20,7 @@ properties % Public properties
     type;     % String dictating the image type
     imposition = []; % Position of the imtool window
     imsize;   % The image size (in pixels) 
+    ColorSpace; % Color space of image (i.e., sRGB)
 
     % Properties for user selected regions
     white = imRegion.empty;
@@ -37,7 +38,8 @@ properties % Public properties
     % Set general imObject options (a value must be assigned)
     selectNorm = true;
     spectralon = true;
-    regionPrompt = true;    
+    regionPrompt = true; 
+    sRGB = false;
     
     % List of figures associated with imObject
     figures = {}; % List of figure names
@@ -47,6 +49,7 @@ end
 properties (SetAccess = private, Transient = true)
     imhandle; % Handle of the imtool window
     imaxes;   % Handle to the image axis
+    impic;    % Handle to the image handle
     plugins;  % Handles to the plugin object(s)
     ovhandle; % Handle of the overview window
     hprog;    % Handles for toggling imObject functionallity 
@@ -77,6 +80,9 @@ methods
         
         % Add handle to the root user data
         obj.addRoot;
+        
+        % Apply sRGB conversion
+        if obj.sRGB; obj.sRGBconvert; end
     end
     
     % OPENOVERVIEW: opens the overview window
@@ -186,11 +192,23 @@ methods
     function obj = removeNorm(obj)
         obj.norm = [];
     end
-
-%     % SRGB: converts the image from an sRGB
-%     function obj = sRGB(obj);
-% 
-%     end
+    
+    % SRGB: converts the image from an sRGB
+    function obj = sRGBconvert(obj)      
+        % Convert the Colorspace
+        if ~isempty(obj.ColorSpace) && ...
+                strcmpi(obj.ColorSpace,'sRGB') && obj.sRGB;
+            obj.image = sRGB(obj.image,'CIE');
+            obj.ColorSpace = 'CIE';
+        elseif ~isempty(obj.ColorSpace) && ...
+                strcmpi(obj.ColorSpace,'CIE') && ~obj.sRGB;
+            obj.image = sRGB(obj.image,'sRGB');
+            obj.ColorSpace = 'sRGB';
+        else
+            disp(['Invalid settings, the conversion',...
+                ' is not possible for this image.']);
+        end
+    end
         
     % CREATEREGION: gathers/creates regions via the imRegion class
     function R = createRegion(obj,type,func,varargin)
@@ -378,6 +396,13 @@ switch ext;
         obj.image = IM;
 end
 
+% GATHER THE COLORSPACE INFORMATION
+if isfield(obj.info,'ColorSpace')  || ...
+    isfield(obj.info,'DigitalCamera') && ...
+    isfield(obj.info.DigitalCamera,'ColorSpace');
+    obj.ColorSpace = obj.info.DigitalCamera.ColorSpace;
+end
+
 % BUILD THE IMAGE NAME
 if ~isempty(obj.imObjectName);
     [~,f,e] = fileparts(obj.imObjectName);
@@ -547,7 +572,7 @@ function callback_closefcn(hObject,~)
 end
 
 %--------------------------------------------------------------------------
-function callback_region(hObject,~,obj);
+function callback_region(hObject,~,obj)
 % CALLBACK_REGION toggles the availabilty of apply/remove white region
     h = guihandles(hObject);
     if isempty(obj.norm);
