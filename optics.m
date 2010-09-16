@@ -27,8 +27,8 @@ end
 
 % DEFINE THE PRIVATE PROPERTIES
 properties (SetAccess = private)   
-    version = 0.1; % Uses this to check for updates
-    verdate = 'August 18, 2010';
+    version = 0.39
+    verdate = '09/16/2010';
     handles = imObject.empty; % Initilize the imObject handles
 end
 
@@ -65,6 +65,39 @@ methods
             % Initilize the control
             initControlGUI(obj);
         end
+        
+        % Check for updates
+        obj.update;
+    end
+    
+    % UPDATE: check for updates
+    function obj = update(obj)
+        % Locate the latest git tag
+        loc = 'http://github.com/aeslaughter/optics/downloads';
+        pattern = '/aeslaughter/optics/zipball/';
+        str = urlread(loc);
+        i = strfind(str,pattern);
+        j = strfind(str(i(1):end),'">zip');
+        
+        % Determine the latest available version
+        v1 = i(1)+length(pattern)+1;
+        v2 = i(1)+j(1)-2;
+        ver = str2double(str(v1:v2));
+        
+        % Compare the versions
+        if ver <= obj.version; return; end
+        
+        % Prompt the user
+        mes = ['A newer version of Snow Optics Toolbox is available, ',...
+            'would you like to download this version?'];
+        q = questdlg(mes,'New version...',...
+            'Download','Continue','Downolad');
+        
+        % Return if user selects continue
+        if ~strcmpi(q,'Download'); return; end;
+        
+        % Unzip the latest and greatest
+        web('http://github.com/aeslaughter/optics/downloads','-browser');
     end
     
     % CONNECTFTP: connects the user to the FTP server
@@ -77,6 +110,7 @@ methods
                 ' The local directory is being used.'];
             warndlg('Failed to connect to the FTP server!');
             obj.useftp = false;
+            obj.FTP = NaN;
         end
     end
 
@@ -249,7 +283,7 @@ methods
     % CLOSEOPTICS: operates when the GUI is being closed
     function closeOptics(obj)
         % Close the ftp connection
-        close(obj.FTP);
+        if ~isnumeric(obj.FTP) && isvalid(obj.FTP); close(obj.FTP); end
         
         % Delete the imObjects
         idx = isvalid(obj.handles);
@@ -323,7 +357,7 @@ set(h.WSsave,'callback',@(src,event)saveWS(obj,obj.opticsPath,...
 set(h.WSsaveas,'callback',@(src,event)saveWS(obj,'',''));
 set(h.WSopen,'callback',@(src,event)loadWS(obj));
 set(h.gethelp,'callback','gethelp');
-set(h.about,'callback','about');
+set(h.about,'callback',{'about',obj});
 
 % Get the default preferences
 obj.getdefaultPref;
@@ -346,8 +380,12 @@ h = guihandles(hObject);
 % Gather the folder structure from the FTP site
 if obj.useftp
     obj.connectFTP;
-    data = struct2cell(dir(obj.FTP));
-    close(obj.FTP);
+    if isnan(obj.FTP);
+        data = getLocalFolderData(obj.target);
+    else
+        data = struct2cell(dir(obj.FTP));
+        close(obj.FTP);
+    end
 else
     data = getLocalFolderData(obj.target);
 end

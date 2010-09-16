@@ -1,4 +1,5 @@
-function about(varargin)
+function about(~,~,obj)
+% ABOUT opens the Snow Optics Toolbox information window
 
 ver = getpref('OpticsObject','version');
 textbox = {['Version: ',num2str(ver{1})];
@@ -25,10 +26,11 @@ annotation(d,'textbox',[0.01,0.76,0.98,0.18],'String',textbox,...
 annotation(d,'textbox',[0.01,0.01,0.98,0.74],'String',lic,'FontSize',8);
 uicontrol(d,'Style','PushButton','Units','Normalized','Position',...
     [0.74,0.76,0.25,0.05],'String','Check for Updates','Callback',...
-    @checkupdates,'TooltipString',...
+    'obj.update;','TooltipString',...
     'http://github.com/aeslaughter/optics/downloads');
 
-%--------------------------------------------------------------------------
-function checkupdates(varargin)
-web('http://github.com/aeslaughter/optics/downloads','-browser');
+% %--------------------------------------------------------------------------
+% function checkupdates(~,~,obj)
+% obj.update
+% web('http://github.com/aeslaughter/optics/downloads','-browser');
 

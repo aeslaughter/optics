@@ -28,19 +28,17 @@ function RGB = buildCIE(data)
 % BUILDXYZ converts CIE to sRGB
 
 % Establish waitbar
-h = waitbar(0,'Converting image to sRGB format, please wait...');
+h = waitdlg('Converting image to sRGB format, please wait...');
 
 % Perform matrix calcuation, Equation (6)
 M = [3.2406 -1.5372,-0.4986; -0.9689,1.8758,0.0415; 0.0557 -0.2040,1.057];
 RGB = zeros(size(data));
-N = length(RGB)
+N = length(RGB);
 for i = 1:N;    
     RGB(i,:) = M*data(i,:)';
-    waitbar(i/N,h);
 end
 
 % Define the indices for computing 
-a = 0.055;
 ix1 = RGB <= 0.0031308;
 ix2 = RGB > 0.0031308;
 
@@ -49,7 +47,7 @@ RGB(ix1) = RGB(ix1).*12.92;
 RGB(ix2) = 1.055.*data(ix2).^(1/2.4) - 0.055;
 
 % Convert the image to values to 8bit data
- RGB = RGB./255;
+RGB = RGB./255;
 close(h);
 
 %--------------------------------------------------------------------------
@@ -57,7 +55,8 @@ function XYZ = buildXYZ(data)
 % BUILDXYZ converts sRGB to CIE
 
 % Establish waitbar
-h = waitbar(0,'Converting image to sRGB format, please wait...');
+h = waitdlg('Converting image to sRGB format, please wait...');
+tic;
 
 % Convert the image to values from 0 to 1
 mx = max(reshape(data,numel(data),1));
@@ -75,11 +74,11 @@ data(ix1) = data(ix1)./12.92;
 data(ix2) = ((data(ix2) + a)./(1+a)).^2.4;
 
 % Perform matrix calculation, Equation (5)
+toc;
 M = [0.4124,0.3576,0.1805; 0.2126,0.7152,0.0722; 0.0193,0.1192,0.9505];
 XYZ = zeros(size(data));
 N = length(data);
 for i = 1:N;    
     XYZ(i,:) = M*data(i,:)';
-    waitbar(i/N,h);
 end
 close(h);
