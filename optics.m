@@ -85,7 +85,11 @@ methods
         ver = str2double(str(v1:v2));
         
         % Compare the versions
-        if ver <= obj.version; return; end
+        if ver <= obj.version; 
+            msgbox('You have the lastest version.',...
+                'Update...','Help');
+            return; 
+        end
         
         % Prompt the user
         mes = ['A newer version of Snow Optics Toolbox is available, ',...
@@ -283,7 +287,7 @@ methods
     % CLOSEOPTICS: operates when the GUI is being closed
     function closeOptics(obj)
         % Close the ftp connection
-        if ~isnumeric(obj.FTP) && isvalid(obj.FTP); close(obj.FTP); end
+        if ~isnumeric(obj.FTP); close(obj.FTP); end
         
         % Delete the imObjects
         idx = isvalid(obj.handles);
@@ -380,7 +384,7 @@ h = guihandles(hObject);
 % Gather the folder structure from the FTP site
 if obj.useftp
     obj.connectFTP;
-    if isnan(obj.FTP);
+    if isnumeric(obj.FTP);
         data = getLocalFolderData(obj.target);
     else
         data = struct2cell(dir(obj.FTP));
