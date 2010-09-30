@@ -1,4 +1,6 @@
 TODO:
+-Account for failed FTP and missing database folder
+
 -Add XYscatter and waitbar to bin
 
 -Add waitbar to sRGB
