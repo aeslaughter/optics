@@ -20,7 +20,7 @@ properties % Public properties
     type;     % String dictating the image type
     imposition = []; % Position of the imtool window
     imsize;   % The image size (in pixels) 
-    ColorSpace; % Color space of image (i.e., sRGB)
+    ColorSpace; % Color space of image ('sRGB' or empty)
 
     % Properties for user selected regions
     white = imRegion.empty;
@@ -39,7 +39,6 @@ properties % Public properties
     selectNorm = true;
     spectralon = true;
     regionPrompt = true; 
-    sRGB = false;
     
     % List of figures associated with imObject
     figures = {}; % List of figure names
@@ -82,7 +81,7 @@ methods
         obj.addRoot;
         
         % Apply sRGB conversion
-        if obj.sRGB; obj.sRGBconvert; end
+%         if obj.sRGB; obj.sRGBconvert; end
     end
     
     % OPENOVERVIEW: opens the overview window
@@ -194,21 +193,21 @@ methods
     end
     
     % SRGB: converts the image from an sRGB
-    function obj = sRGBconvert(obj)      
-        % Convert the Colorspace
-        if ~isempty(obj.ColorSpace) && ...
-                strcmpi(obj.ColorSpace,'sRGB') && obj.sRGB;
-            obj.image = sRGB(obj.image,'CIE');
-            obj.ColorSpace = 'CIE';
-        elseif ~isempty(obj.ColorSpace) && ...
-                strcmpi(obj.ColorSpace,'CIE') && ~obj.sRGB;
-            obj.image = sRGB(obj.image,'sRGB');
-            obj.ColorSpace = 'sRGB';
-        else
-            disp(['Invalid settings, the conversion',...
-                ' is not possible for this image.']);
-        end
-    end
+%     function obj = sRGBconvert(obj)      
+%         % Convert the Colorspace
+%         if ~isempty(obj.ColorSpace) && ...
+%                 strcmpi(obj.ColorSpace,'sRGB') && obj.sRGB;
+%             obj.image = sRGB(obj.image,'CIE');
+%             obj.ColorSpace = 'CIE';
+%         elseif ~isempty(obj.ColorSpace) && ...
+%                 strcmpi(obj.ColorSpace,'CIE') && ~obj.sRGB;
+%             obj.image = sRGB(obj.image,'sRGB');
+%             obj.ColorSpace = 'sRGB';
+%         else
+%             disp(['Invalid settings, the conversion',...
+%                 ' is not possible for this image.']);
+%         end
+%     end
         
     % CREATEREGION: gathers/creates regions via the imRegion class
     function R = createRegion(obj,type,func,varargin)

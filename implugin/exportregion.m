@@ -21,7 +21,7 @@ function callback_export(hObject,~,obj)
 
 % Gather the regions
 type = get(hObject,'Label');
-R = obj.(lower(type));
+R = gatherRegions(lower(type),obj,'all');
 
 % Return if no regions are selected
 if isempty(R); 
@@ -29,25 +29,27 @@ if isempty(R);
     return;
 end
 
-% Gather image an file information
-I = obj.getImage;
-[~,f,ext] = fileparts(obj.filename);
-
 % Loop through the regions and seperate out data and create labels for
 % export
 for r = 1:length(R);
+    % Gather image info
     mask = R(r).getRegionMask; 
+    I = R(r).parent.getImage;
+    [~,f,ext] = fileparts(R(r).parent.filename);
+    
+    % Build labels
     name{r} = [f,ext,' ',type,' #',strtrim(R(r).label)];
     varname{r} = genvarname([f,type,R(r).label]);
     checklabels{r} = ['Store region ',name{r},' to variable named:'];
     
+    % Gather data
     for i = 1:size(I,2);
         data{r}(:,i) = I(mask,i);
     end
 end
 
 % Prompt the user for data export
-export2wsdlg(checklabels,varname,data)
+export2wsdlg(checklabels,varname,data);
 
 
 

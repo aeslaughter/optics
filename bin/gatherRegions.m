@@ -4,6 +4,7 @@ function r = gatherRegions(type,currentObj,varargin)
 % SYNTAX:
 %   r = gatherRegions(type,currentObj);
 %   r = gatherRegions(type,currentObj,'single');
+%   r = gatherRegions(type,currentObj,'all');
 %__________________________________________________________________________
 
 % 1 - COLLECT THE AVAILBLE IMOBJECTS FROM THE ROOT USER DATA
@@ -19,9 +20,9 @@ end
 
 % 3 - PROMPT THE USER TO SELECT THE REGIONS
 R = [H(:).(type)];
-if length(R) > 1; % Prompts user
+if length(R) > 1 && isempty(varargin) || ~strcmpi(varargin{1},'all');
     r = promptUser(R,currentObj.(type),currentObj.type,varargin{:});
-else % Case when only one region is available (don't prompt)
+else % Case when one region is available or all are desired (don't prompt)
     r = R;
 end
 

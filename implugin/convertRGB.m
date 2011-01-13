@@ -1,10 +1,6 @@
 function p = convertRGB(obj)
 % CONVERTRGB adds a menu toggle for converting between sRGB and CIE data
-
-% DETERMINE THE STATUS
-check = 'off';
-if obj.sRGB; check = 'on'; end
-    
+   
 % DEFINE THE MENUS
 p = imPlugin(obj,mfilename);
 p.plugintype = {'VIS','NIR'};
@@ -12,19 +8,36 @@ p.plugintype = {'VIS','NIR'};
 p.MenuOrder = 1;
 p.MenuParent = 'Analysis';
 Callback = @(hObject,eventdata) callback_convert(hObject,eventdata,obj);
-p.MenuOptions = {'Label','Convert sRGB to CIE','Checked',check,...
-    'callback',Callback};
+p.MenuOptions = {'Label','Convert sRGB to CIE','callback',Callback};
+
+% DEFINE THE PREFERENCES
+p.Pref(1).Value = true;
+p.Pref(1).Label = 'Prompt user to save new image (C.I.)';
 
 %--------------------------------------------------------------------------
-function callback_convert(hObject,~,obj)
+function callback_convert(~,~,obj)
 % CALLBACK_CONVERT toggles the sRGB conversion (also in imObject pref.)
 
-if obj.sRGB; 
-    obj.sRGB = false; 
-    obj.sRGBconvert;
-    set(hObject,'Checked','off');
+% Prompt user for a new filename
+[p,f,e] = fileparts(obj.filename);
+filename = [p,filesep,f,'(CIE)',e];
+
+[F,P] = uiputfile(e,'Save new image as...',filename);
+if isnumeric(F); return; end;
+newfile = [P,filesep,F]
+
+% Convert the Colorspace
+if strcmpi(obj.ColorSpace,'sRGB');
+    I = sRGB(obj.image,'sRGB');
+    ColorSpace = 'CIE';
 else
-    obj.sRGB = true;
-    obj.sRGBconvert;
-    set(hObject,'Checked','on');
+    warndlg(['Invalid settings, the conversion',...
+        ' is not possible for this image.'],'Invalid format');
+    return;
 end
+
+% Create and open the new file
+imwrite(I,newfile);
+obj = imObject(newfile);
+obj.ColorSpace = ColorSpace;
+    

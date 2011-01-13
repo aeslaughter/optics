@@ -1,5 +1,10 @@
-function output = sRGB(data,type)
+function output = sRGB(data,type,varargin)
 % sRGB converts between sRGB and 1931 CIE XYZ
+%__________________________________________________________________________
+% SYNTAX:
+%   output = sRGB(data,type)
+%   output = sRGB(data,type,FigurePosition)
+%
 
 % Convert the image into single precision data
 data = single(data);
