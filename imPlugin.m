@@ -64,8 +64,8 @@ methods
         end
 
         % Set the enable setting
-        if ~isempty(obj.plugintype) && sum(strcmpi(obj.parent.type,...
-                obj.plugintype)) == 0
+        if ~isempty(obj.plugintype) && any(~strcmpi(obj.parent.type,...
+                obj.plugintype))
             set(mm,'enable','off');
         end
     end

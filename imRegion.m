@@ -86,15 +86,15 @@ methods
         if ~isempty(obj.label);
            obj.addlabel(obj.label); 
         end
-    end     
-    % GETREGIONMASK: returns an image mask
+    end
     
+    % GETREGIONMASK: returns an image mask
     function mask = getRegionMask(obj)
         if ~isvalid(obj.imroi); mask = []; return; end
         mask = createMask(obj.imroi); % The image mask of the region
         mask = reshape(mask,[],1); % Organizes the mask in columns 
     end
-     
+    
     % ADDLABEL: inserts the region label
     function obj = addlabel(obj,input)
         % Add label in the case of impoint

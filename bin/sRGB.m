@@ -56,7 +56,6 @@ function XYZ = buildXYZ(data)
 
 % Establish waitbar
 h = waitdlg('Converting image to sRGB format, please wait...');
-tic;
 
 % Convert the image to values from 0 to 1
 mx = max(reshape(data,numel(data),1));
@@ -74,7 +73,6 @@ data(ix1) = data(ix1)./12.92;
 data(ix2) = ((data(ix2) + a)./(1+a)).^2.4;
 
 % Perform matrix calculation, Equation (5)
-toc;
 M = [0.4124,0.3576,0.1805; 0.2126,0.7152,0.0722; 0.0193,0.1192,0.9505];
 XYZ = zeros(size(data));
 N = length(data);

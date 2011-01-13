@@ -1,8 +1,9 @@
-function r = gatherRegions(type,currentObj)
+function r = gatherRegions(type,currentObj,varargin)
 % GATHERREGIONS collects and outputs selected work/white regions
 %__________________________________________________________________________
 % SYNTAX:
 %   r = gatherRegions(type,currentObj);
+%   r = gatherRegions(type,currentObj,'single');
 %__________________________________________________________________________
 
 % 1 - COLLECT THE AVAILBLE IMOBJECTS FROM THE ROOT USER DATA
@@ -19,13 +20,13 @@ end
 % 3 - PROMPT THE USER TO SELECT THE REGIONS
 R = [H(:).(type)];
 if length(R) > 1; % Prompts user
-    r = promptUser(R,currentObj.(type),currentObj.type);
+    r = promptUser(R,currentObj.(type),currentObj.type,varargin{:});
 else % Case when only one region is available (don't prompt)
     r = R;
 end
 
 %--------------------------------------------------------------------------
-function r = promptUser(R,Rcur,theType)
+function r = promptUser(R,Rcur,theType,varargin)
 % PROMPTUSER opens a dialog with the available regions
 
 % Build a list of the available regions (do not allow mismatch of images)
@@ -38,16 +39,27 @@ for i = 1:length(R);
     end
 end
 
-% By default only the regions in the calling imObject are used
-for i = 1:length(R); idx(i) = any(R(i) == Rcur); end
-vec = 1:length(list);
+% Limit selection to a single region
+if ~isempty(varargin) && strcmpi(varargin{1},'single');
+    themax = 1;
+    thevalue = 1; % No items selected
+    name = 'Select Region...';
+else
+    themax = 2;
+    name = 'Select Region(s)...';
+    
+    % Limits selected region to those of the calling image
+    for i = 1:length(R); idx(i) = any(R(i) == Rcur); end
+    vec = 1:length(list);
+    thevalue = vec(idx);
+end
 
 % Build the dialog
-d = dialog('WindowStyle', 'modal', 'Name', 'Select Region(s)...',...
+d = dialog('WindowStyle', 'modal', 'Name',name,...
     'Units','Normalized','Position',[0.45,0.45,0.15,0.15]);
 hlist = uicontrol(d,'Style','listbox','String',list,'Units',...
-    'Normalized','Position',[0.05,0.25,0.9,0.65],'Max',2,...
-    'Value',vec(idx));
+    'Normalized','Position',[0.05,0.25,0.9,0.65],'Max',themax,...
+    'Value',thevalue);
 uicontrol(d,'Style','Pushbutton','String','OK','Units','Normalized',...
     'Position',[0.8,0.05,0.15,0.15],'Callback','uiresume(gcbf)');
 uiwait(d);
