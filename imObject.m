@@ -20,7 +20,7 @@ properties % Public properties
     type;     % String dictating the image type
     imposition = []; % Position of the imtool window
     imsize;   % The image size (in pixels) 
-    ColorSpace; % Color space of image (i.e., sRGB)
+    ColorSpace;% Color space of image (e.g., sRGB)
 
     % Properties for user selected regions
     white = imRegion.empty;
@@ -39,7 +39,6 @@ properties % Public properties
     selectNorm = true;
     spectralon = true;
     regionPrompt = true; 
-    sRGB = false;
     
     % List of figures associated with imObject
     figures = {}; % List of figure names
@@ -80,9 +79,6 @@ methods
         
         % Add handle to the root user data
         obj.addRoot;
-        
-        % Apply sRGB conversion
-        if obj.sRGB; obj.sRGBconvert; end
     end
     
     % OPENOVERVIEW: opens the overview window
@@ -193,21 +189,38 @@ methods
         obj.norm = [];
     end
     
-    % SRGB: converts the image from an sRGB
-    function obj = sRGBconvert(obj)      
-        % Convert the Colorspace
-        if ~isempty(obj.ColorSpace) && ...
-                strcmpi(obj.ColorSpace,'sRGB') && obj.sRGB;
-            obj.image = sRGB(obj.image,'CIE');
-            obj.ColorSpace = 'CIE';
-        elseif ~isempty(obj.ColorSpace) && ...
-                strcmpi(obj.ColorSpace,'CIE') && ~obj.sRGB;
-            obj.image = sRGB(obj.image,'sRGB');
-            obj.ColorSpace = 'sRGB';
-        else
-            disp(['Invalid settings, the conversion',...
-                ' is not possible for this image.']);
+    % CONVERTCOLORSPACE: converts the image to various colorspaces
+    function obj = convertColorSpace(obj,C) 
+
+        % If a colorspace is defined for the image, try to convert it
+        if ~isempty(obj.ColorSpace);
+            conv = [obj.ColorSpace,'2',lower(C)]; % Define the conversion
+
+            try % Attempt to convert the image
+                cform = makecform(conv);
+            catch % If conversion fails prompt the user
+                mes = ['The conversion is not possible, a direct ',...
+                    'conversion is likely not available. Try ',...
+                    'converting to sRGB first, then the desired format.'];
+                msgbox(mes,'Conversion Failed');
+                return;
+            end
+        else % Case when no colorspace is defined
+            mes = ['Conversion not possible for this image, no color ',...
+                'specification was found.'];
+            warndlg(mes,'Conversion Failed');
+            return;
         end
+        
+       % Perform the conversion
+       mes = ['Performing color space conversion from ',obj.ColorSpace,...
+           ' to ',C,' please wait...'];                
+       obj.ColorSpace = C;
+       h = waitdlg(mes,get(obj.imhandle,'position'));
+       data = reshape(obj.image,obj.imsize);
+       data = applycform(data,cform);
+       obj.image = reshape(data,[],obj.imsize(3));
+       close(h);
     end
         
     % CREATEREGION: gathers/creates regions via the imRegion class
@@ -396,13 +409,6 @@ switch ext;
         obj.image = IM;
 end
 
-% GATHER THE COLORSPACE INFORMATION
-if isfield(obj.info,'ColorSpace')  || ...
-    isfield(obj.info,'DigitalCamera') && ...
-    isfield(obj.info.DigitalCamera,'ColorSpace');
-    obj.ColorSpace = obj.info.DigitalCamera.ColorSpace;
-end
-
 % BUILD THE IMAGE NAME
 if ~isempty(obj.imObjectName);
     [~,f,e] = fileparts(obj.imObjectName);
@@ -424,6 +430,21 @@ set(h,'BusyAction','cancel','Units','Normalize','Name',name,...
     'CloseRequestFcn',@callback_closefcn);
 if ~isempty(obj.imposition);
     set(h,'Position',obj.imposition);
+end
+
+% GATHER THE COLORSPACE INFORMATION
+if isfield(obj.info,'ColorSpace')  || ...
+    isfield(obj.info,'DigitalCamera') && ...
+    isfield(obj.info.DigitalCamera,'ColorSpace');
+    RawColorSpace = obj.info.DigitalCamera.ColorSpace;
+end
+
+% DEFINE/CONVERT COLORSPACE
+convertTO = obj.ColorSpace;
+obj.ColorSpace = RawColorSpace;
+
+if ~isempty(convertTO);    
+    obj.convertColorSpace(convertTO);
 end
 
 end   
