@@ -123,6 +123,7 @@ methods
         % Gather the handle and position
         h = obj.imroi;
         pos = obj.position;
+        if isempty(pos); delete(h); return; end
     
         % Gathers the ellipse verticies
         if strcmpi(obj.func,'imellipse');

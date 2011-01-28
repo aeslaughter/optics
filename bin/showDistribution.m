@@ -22,6 +22,7 @@ function h = showDistribution(R,varargin)
     opt.hsi = false;
     opt.wavelength = [380,750; 750,3000];
     opt.wavelengthlabel = {'VIS','NIR'};
+    opt.colorspace = '';
     
     % 1.2 - Gather the user supplied settings
     opt = gatheruseroptions(opt,varargin{:});
@@ -39,14 +40,23 @@ function h = showDistribution(R,varargin)
     xi = f;                     % Initilize the output (xi = refl.)
     k = 1;                      % Initilize counter for RGB option
     a.legend = {};              % Initilize the legend (needed for HSI)
-    rgb = {'Red','Green','Blue'}; % Colors for Red/Green/Blue option
-
-    % 3.2 - Compute the region distributions
+    
+    % 3.2 - Define labels for various colorspaces
+    switch lower(opt.colorspace)
+        case 'xyz';
+            rgb = {'X','Y','Z'};
+        case 'xyl'
+            rgb = {'x','y','Y'};
+        otherwise
+            rgb = {'Red','Green','Blue'};
+    end
+    
+    % 3.3 - Compute the region distributions
     for i = 1:N;
         data = R(i).parent.getImage(R(i).type); 
         mask = R(i).getRegionMask;
 
-        % 3.2.1 - Compute the RGB distributions
+        % 3.3.1 - Compute the RGB distributions
         if opt.rgb;
             for j = 1:size(data,2);
                 [~,fname,ext] = fileparts(R(i).parent.filename);
@@ -58,12 +68,12 @@ function h = showDistribution(R,varargin)
                 k = k + 1;
             end
             
-        % 3.2.2 - Compute Hyperspectral distributions based on wavelenghts
+        % 3.3.2 - Compute Hyperspectral distributions based on wavelenghts
         elseif opt.hsi;
             opt.wavelengthlabel = HSIlabels(opt);
             [f,xi,k,a] = computeHSI(R(i),opt,a,f,xi,k);
 
-        % 3.2.3 - Compute the mean distributions
+        % 3.3.3 - Compute the mean distributions
         else
             data = mean(data,2);
             data = data(mask);

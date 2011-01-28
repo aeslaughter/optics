@@ -67,7 +67,7 @@ methods
         end
         
         % Check for updates
-        obj.update;
+        %obj.update;
     end
     
     % UPDATE: check for updates

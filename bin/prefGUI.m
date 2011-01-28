@@ -275,7 +275,9 @@ H = get(0,'UserData');
 
 % Loop through each imObject (should be a better way to do this)
 for i = 1:length(H);
-    H(i).plugins(val).Pref = P.Pref;
+    if isvalid(H(i));
+        H(i).plugins(val).Pref = P.Pref;
+    end
 end
 
 % Update any open plugin lists

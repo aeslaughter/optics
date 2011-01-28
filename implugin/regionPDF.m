@@ -5,7 +5,7 @@ function p = regionPDF(obj)
 p = imPlugin(obj,mfilename);
 p.plugintype = {'VIS','NIR'};
 
-p.MenuOrder = 1;
+p.MenuOrder = 3;
 p.MenuParent = 'Analysis';
 Callback = @(hObject,eventdata) callback_compare(hObject,eventdata,obj,p);
 p.MenuOptions = {'Label','Calculate Region PDF(s)'};
@@ -16,7 +16,7 @@ p.MenuSubmenu{1} = {'Label','Work','callback',Callback};
 
 % DEFINE THE PLUGIN PREFERENCES
 p.Pref(1).Value = false;
-p.Pref(1).Label = 'Seperate RGB Colors';
+p.Pref(1).Label = 'Seperate RGB Colors or XYZ components';
 
 p.Pref(2).Value = 4;
 p.Pref(2).Label = 'EPDF Kernel';
@@ -60,6 +60,7 @@ function callback_compare(hObject,~,obj,p)
     opt.bandwidth = str2double(p.Pref(4).Value);   
     opt.width = str2double(p.Pref(5).Value);
     opt.height = str2double(p.Pref(6).Value); 
+    opt.colorspace = obj.ColorSpace;
     
 % 3 - COMPARE THE REGIONS
     h = showDistribution(R,opt); 

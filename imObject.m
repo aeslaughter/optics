@@ -190,18 +190,18 @@ methods
     end
     
     % CONVERTCOLORSPACE: converts the image to various colorspaces
-    function obj = convertColorSpace(obj,C) 
+    function obj = convertColorSpace(obj,C,name) 
 
         % If a colorspace is defined for the image, try to convert it
         if ~isempty(obj.ColorSpace);
-            conv = [obj.ColorSpace,'2',lower(C)]; % Define the conversion
+            conv = [obj.ColorSpace,'2',C]; % Define the conversion
 
             try % Attempt to convert the image
                 cform = makecform(conv);
             catch % If conversion fails prompt the user
                 mes = ['The conversion is not possible, a direct ',...
                     'conversion is likely not available. Try ',...
-                    'converting to sRGB first, then the desired format.'];
+                    'converting to XYZ first, then the desired format.'];
                 msgbox(mes,'Conversion Failed');
                 return;
             end
@@ -214,7 +214,7 @@ methods
         
        % Perform the conversion
        mes = ['Performing color space conversion from ',obj.ColorSpace,...
-           ' to ',C,' please wait...'];                
+           ' to ',name,' please wait...'];                
        obj.ColorSpace = C;
        h = waitdlg(mes,get(obj.imhandle,'position'));
        data = reshape(obj.image,obj.imsize);
@@ -285,6 +285,11 @@ methods
         if ishandle(obj.ovhandle);
             obj.ovposition = get(obj.ovhandle,'position');
         end
+    end
+    
+    % EXPORTOBJ: export object to the workspace
+    function exportObj(obj)
+       export2wsdlg('Export the imObject handle as: ','obj',obj)    
     end
         
     % ADDCHILD: keeps track of figures created using the plugin
@@ -457,12 +462,14 @@ function createtools(obj)
 h = obj.imhandle; % imtool handle
 [~,fn,ext] = fileparts(obj.filename);
 set(h,'MenuBar','none');
-im = uimenu(h,'Label','im&Object'); % The Regions menu
+im = uimenu(h,'Label','imObject'); % The Regions menu
     uimenu(im,'Label','imObject Save','callback',...
         @(src,event)saveimObject(obj,obj.imObjectPath,...
         obj.imObjectName));
     uimenu(im,'Label','imObject Save as...','callback',...
         @(src,event)saveimObject(obj,'',''));
+    uimenu(im,'Label','Export imObject handle','callback',...
+        @(src,event)exportObj(obj));
     uimenu(im,'Label','Open Overview','separator','on','Checked',...
         obj.overview,'callback',@callback_overview);
     uimenu(im,'Label','View Image Information','separator','on',...
@@ -604,3 +611,5 @@ function callback_region(hObject,~,obj)
         set(h.RemoveWhite,'Enable','on');
     end
 end
+
+

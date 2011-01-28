@@ -5,7 +5,7 @@ function p = exportregion(obj)
 p = imPlugin(obj,mfilename);
 p.plugintype = {};
 
-p.MenuOrder = 1;
+p.MenuOrder = 4;
 p.MenuParent = 'Analysis';
 Callback = @(hObject,eventdata) callback_export(hObject,eventdata,obj);
 p.MenuOptions = {'Label','Export Regions(s)'};
