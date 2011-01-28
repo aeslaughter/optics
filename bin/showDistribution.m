@@ -47,6 +47,8 @@ function h = showDistribution(R,varargin)
             rgb = {'X','Y','Z'};
         case 'xyl'
             rgb = {'x','y','Y'};
+        case 'cymk'
+            rgb = {'Cyan','Magenta','Yellow','Black'};
         otherwise
             rgb = {'Red','Green','Blue'};
     end
