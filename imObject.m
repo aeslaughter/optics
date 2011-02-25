@@ -109,6 +109,7 @@ methods
 
         % Re-shape the data into columns
         c = obj.imsize;
+        if length(c) == 2; c(3) = 1; end
         data = reshape(data,[],c(3));
 
         % If the 'raw' or 'white' tags are used, ignore normalizing
@@ -396,6 +397,7 @@ spec = {'*.jpg','JPEG Image (*.jpg)';...
     '*.bip;*.bil','HSI Image (*.bip,*.bil)'};
 obj.filename = gatherfile('get','LastUsedDir',spec,varargin{:});
 if isempty(obj.filename); return; end
+RawColorSpace = '';
 
 % OPEN THE IMAGE
 [~,~,ext] = fileparts(obj.filename);   

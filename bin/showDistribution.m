@@ -23,6 +23,9 @@ function h = showDistribution(R,varargin)
     opt.wavelength = [380,750; 750,3000];
     opt.wavelengthlabel = {'VIS','NIR'};
     opt.colorspace = '';
+    opt.output = 'EPDF';
+    opt.fittype = 'Normal';
+    opt.nbin = 30;
     
     % 1.2 - Gather the user supplied settings
     opt = gatheruseroptions(opt,varargin{:});
@@ -65,8 +68,9 @@ function h = showDistribution(R,varargin)
                 a.legend{k} = [fname,ext,':',R(i).type,':',...
                     R(i).label,'(',rgb{j},')'];
                 X = data(mask,j);
-                [f(:,k),xi(:,k)] = ksdensity(double(X),...
-                      'kernel',opt.kernel,'npoints',opt.npoints);
+                [y(:,i),x(:,i),a] = buildgraph(X,opt,a);
+%                 [f(:,k),xi(:,k)] = ksdensity(double(X),...
+%                       'kernel',opt.kernel,'npoints',opt.npoints);
                 k = k + 1;
             end
             
@@ -80,10 +84,11 @@ function h = showDistribution(R,varargin)
             data = mean(data,2);
             data = data(mask);
             [~,fname,ext] = fileparts(R(i).parent.filename);
-            a.legend{i} = [fname,ext,':',R(i).type,':',...
-                R(i).label];
-             [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
-                'npoints',opt.npoints,'width',opt.bandwidth);
+            a.legend{i} = [fname,ext,':',R(i).type,':',R(i).label];
+            [y(:,i),x(:,i),a] = buildgraph(data,opt,a);
+
+%              [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
+%                 'npoints',opt.npoints,'width',opt.bandwidth);
        end
     end
 
@@ -95,20 +100,60 @@ function h = showDistribution(R,varargin)
     end
 
     % 4.2 - Define the general properties
-    a.ylabel = 'Prob. Density';
     a.xlabel = 'Brightness';
     a.linewidth = 2;
     a.interpreter = 'none';
     a.tight = 'on';
     a.fontname = 'times'; a.fontsize = 9;
-%     a.location = 'best';
     a.size = [opt.width,opt.height];
 
     % 4.3 - Produce the graph
-    h = XYscatter(xi,f,'advanced',a);  
+    switch opt.output
+        case 'Histogram';
+            h = figure;
+            bar(x,y,1,'grouped');
+            xlabel(a.xlabel);
+            ylabel(a.ylabel);
+            legend(a.legend);
+            axis auto
+            
+        otherwise
+            h = XYscatter(x,y,'advanced',a);
+    end
     
 % 5 - CLOSE THE WAIT DIALOG
     delete(hwait);
+    
+%--------------------------------------------------------------------------
+function [y,x,a] = buildgraph(data,opt,a)
+% BUILDGRAPH extracts the desired data
+
+switch opt.output
+    case 'EPDF';
+        [y,x] = ksdensity(data,'kernel',opt.kernel,...
+            'npoints',opt.npoints,'width',opt.bandwidth);
+        a.ylabel = 'Empirical Probability Density';
+    case 'ECDF';
+        [y,x] = ecdf(data);
+        a.ylabel = 'Empirical Cumulative Probability';
+    case 'Histogram';
+        [y,x] = hist(data,opt.nbin);
+        a.ylabel = 'Probability';
+    case 'Fit(PDF)';
+        step = (max(data) - min(data))/100;
+        x = (min(data) : step : max(data))';
+        phat = mle(data,'distribution',opt.fittype);
+        input = num2cell(phat);
+        y = pdf(opt.fittype,x,input{:});
+        a.ylabel = 'Probability Density';
+    case 'Fit(CDF)';
+        step = (max(data) - min(data))/100;
+        x = (min(data) : step : max(data))';
+        phat = mle(data,'distribution',opt.fittype);
+        input = num2cell(phat);
+        y = cdf(opt.fittype,x,input{:});
+        a.ylabel = 'Cumulative Probability';       
+end   
        
 %--------------------------------------------------------------------------
 function L = HSIlabels(opt)
@@ -127,7 +172,7 @@ for i = 1:size(W,1);
 end
 
 %--------------------------------------------------------------------------
-function [f,xi,k,a] = computeHSI(R,opt,a,f,xi,k)
+function [y,x,k,a] = computeHSI(R,opt,a,y,x,k)
 % COMPUTEHSI calcules the PDF between the desired wavelenghts
 
 % Gather the image wavelenght information
@@ -148,9 +193,10 @@ for i = 1:size(W,2);
     a.legend{k} = [fn,ext,':',R.type,':',...
                     R.label,'(',L{i},')'];
     
-    % Append the PDF data            
-    [f(:,k),xi(:,k)] = ksdensity(X,'kernel',opt.kernel,...
-        'npoints',opt.npoints);
+    % Append the PDF data    
+    [y(:,k),x(:,k),a] = buildgraph(X,opt,a);
+%     [f(:,k),xi(:,k)] = ksdensity(X,'kernel',opt.kernel,...
+%         'npoints',opt.npoints);
     k = k + 1; % Increment the counter
 end
          
