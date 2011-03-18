@@ -197,15 +197,20 @@ methods
         if ~isempty(obj.ColorSpace);
             conv = [obj.ColorSpace,'2',C]; % Define the conversion
 
-            try % Attempt to convert the image
-                cform = makecform(conv);
-            catch % If conversion fails prompt the user
+            % Return if the colorspaces are the same
+            if strcmp(obj.ColorSpace,C);
+                return;
+                
+            % Return if conversion is not possible    
+            elseif ~exist(conv,'builtin');
                 mes = ['The conversion is not possible, a direct ',...
                     'conversion is likely not available. Try ',...
                     'converting to XYZ first, then the desired format.'];
                 msgbox(mes,'Conversion Failed');
                 return;
             end
+            cform = makecform(conv);
+
         else % Case when no colorspace is defined
             mes = ['Conversion not possible for this image, no color ',...
                 'specification was found.'];
