@@ -22,11 +22,7 @@ annotation(d,'textbox',[0,0,1,1],...
 
 % Center the dialog in parent window, if desired
 if nargin == 2; 
-    p = get(d,'Position');
-    loc = varargin{2};
-    p(1) = loc(1) + loc(3)/2 - p(3)/2;
-    p(2) = loc(2) + loc(4)/2 - p(4)/2;
-    set(d,'Position',p);
+    centerwindow(d,varargin{2});
 end
 
 % Draw the window and make the window modal

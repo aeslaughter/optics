@@ -55,6 +55,7 @@ function callback_gof(hObject,~,obj,p)
     exl = p.Pref(4).Value;
     
 % 3 - SEPERATE THE DESIRED DATA
+    % 3.1 - Loop through each of the regions
     for i = 1:length(R)
         mask = R(i).getRegionMask;
         I = getImage(R(i).parent);
@@ -65,10 +66,18 @@ function callback_gof(hObject,~,obj,p)
         n{i} = size(x{i},1);
         if n{i} > 10000; nn{i} = 10000; else nn{i} = n{i}; end
         name{i} = [R(i).type,'-',R(i).label];
+        [~,fn,ext] = fileparts(R(i).parent.filename);
+        fname{i} = [fn,ext];
     end
-
+    
+    % 3.2 - Build the output name
+    if strcmp(fname{1},fname{2});
+        outname = fname{1};
+    else
+        outname = [fname{1},' : ',fname{2}];
+    end
+    
 % 4 - COMPARE THE MEANS OF THE SAMPLE
-    M = {}; % Intilize message box text     
     N = size(x{1},2);
     h = waitdlg('Comparing regions, please wait...',...
             get(imObj.imhandle,'position'));
@@ -84,8 +93,11 @@ function callback_gof(hObject,~,obj,p)
         X2 = x2(R2);
 
         % 4.3 - Perform bootstrap on mean and standard deviation
+        PDM = abs(2*(mean(x1) - mean(x2))/(mean(x1) + mean(x2)))*100;
         MN = mean(X2) - mean(X1);
-        SD = std(X2) - std(X1); 
+        PDS = abs(2*(std(x1)./mean(x1) - std(x2)./mean(x2))...
+            /(std(x1)./mean(x1) + std(x2)./mean(x2)))*100;
+        SD = std(X2)./mean(X2) - std(X1)./mean(X1); 
         ci1 = prctile(MN,[alpha/2,100-alpha/2]);
         ci2 = prctile(SD,[alpha/2,100-alpha/2]);
         
@@ -102,36 +114,37 @@ function callback_gof(hObject,~,obj,p)
         end   
 
         % 4.6 - Build output
-        [~,fname,ext] = fileparts(imObj.filename);
-        if N == 1;
-            outname = [fname,ext];
+        if N > 1;
+            theoutname = [outname,' (',num2str(i),')'];
         else
-            outname = [[fname,ext],' (',num2str(i),')'];
+            theoutname = outname;
         end
         region = [regexprep(name{1},' ',''),' : ',...
             regexprep(name{2},' ','')];
         
-        labels = {'Filename','Regions', 'Mean C.I. (high)', 'Mean C.I. (low)',...
-            'Mean-1', 'CI % of Mean-1',...
-            'Mean-2', 'CI % of Mean-2',...
-            'Chi-squared p-value','Chi-squared result',...
-            'Std-1', 'CI % of Std-1',...
-            'Std-2', 'CI % of Std-2',...
-            'Chi-squared p-value','Chi-squared result'};
-        output(i,:) = {outname,region , ci1(1), ci1(2), ...
-            mean(x1), max(abs(ci1))/mean(x1)*100,...
-            mean(x2), max(abs(ci1))/mean(x2)*100,...
-            p1,chi1,...
-            std(x1), max(abs(ci2))/std(x1)*100,...
-            std(x2), max(abs(ci2))/std(x2)*100,...
-            p2,chi2}; 
+        labels = {'Filename','Regions',...
+            'Mean-1', 'COV-1',...
+            'Mean-2', 'COV-2',...           
+            '% Diff. Means', '% Diff. COV',...
+            'Mean C.I. (high)', 'Mean C.I. (low)',...
+            'COV C.I. (high)', 'COV C.I. (low)',...
+            'Chi^2 p-value (mean)','Chi^2 (mean)',...
+            'Chi^2 p-value (COV)','Chi^2 (COV)'};
+        output(i,:) = {theoutname, region,...
+            mean(x1), std(x1),...
+            mean(x2), std(x2),...
+            PDM, PDS,...
+            ci1(1), ci1(2),...
+            ci2(1), ci2(2),...
+            p1, chi1,...
+            p2, chi2}; 
     end
     close(h);
 
 % % 5 - REPORT RESULTS 
     if ~exl; % Case when printing to the screen
-        for i = 1:length(output);
-            cur = output{i};
+        for i = 1:size(output,1);
+            cur = output(i,:);
             for j = 1:length(cur);
                 disp([labels{j},': ',num2str(cur{j})]);
             end

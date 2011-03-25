@@ -20,14 +20,17 @@ end
 % 3 - PROMPT THE USER TO SELECT THE REGIONS
 R = [H(:).(type)];
 if length(R) > 1; % Prompts user
-    r = promptUser(R,currentObj.(type),currentObj.type,varargin{:});
+    r = promptUser(R,currentObj.(type),currentObj,varargin{:});
 else % Case when only one region is available (don't prompt)
     r = R;
 end
 
 %--------------------------------------------------------------------------
-function r = promptUser(R,Rcur,theType,varargin)
+function r = promptUser(R,Rcur,currentObj,varargin)
 % PROMPTUSER opens a dialog with the available regions
+
+% Deterime the type
+    theType = currentObj.type;
 
 % Build a list of the available regions (do not allow mismatch of images)
 k = 1;
@@ -62,6 +65,7 @@ hlist = uicontrol(d,'Style','listbox','String',list,'Units',...
     'Value',thevalue);
 uicontrol(d,'Style','Pushbutton','String','OK','Units','Normalized',...
     'Position',[0.8,0.05,0.15,0.15],'Callback','uiresume(gcbf)');
+centerwindow(d,currentobj.imposition);
 uiwait(d); drawnow;
 
 % Gather the selected regions

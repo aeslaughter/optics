@@ -20,7 +20,8 @@ properties % Public properties
     type;     % String dictating the image type
     imposition = []; % Position of the imtool window
     imsize;   % The image size (in pixels) 
-    ColorSpace;% Color space of image (e.g., sRGB)
+    ColorSpace;  % Color space of image (e.g., sRGB)
+    zenith = 0; % Zeinth angle of light source (assumes vertical)
 
     % Properties for user selected regions
     white = imRegion.empty;
@@ -37,7 +38,7 @@ properties % Public properties
     
     % Set general imObject options (a value must be assigned)
     selectNorm = true;
-    spectralon = true;
+    spectralon = false;
     regionPrompt = true; 
     
     % List of figures associated with imObject
@@ -157,7 +158,7 @@ methods
                 
                 if i == 1; % Initilize the normal vector
                     obj.norm = []; % Clears existing norm vector
-                    theNorm = zeros(r,c(3));    
+                    theNorm = zeros(r,c(3));
                 end
             end
             
@@ -167,11 +168,11 @@ methods
                 for j = 1:c(3);
                     theNorm(i,j) = nanmean(data(mask,j));
                 end
-            end
+            end 
         end
 
-        % Update the normalization property
-        obj.norm = mean(theNorm,1);
+        % Update the normalization property (adjust for zenith angle)
+        obj.norm = mean(theNorm,1)/cosd(obj.zenith);    
 
         % Apply HSI spectralon reference, if desired
         if any(strcmpi({'HSI'},obj.type)) && obj.spectralon;
@@ -185,6 +186,31 @@ methods
         obj.progress
     end
     
+    % SOLARZENITH: Allows the user to change the solar zenith angle
+    function obj = solarZenith(obj)
+        % Prompt the user for a solar zenith angle
+        prompt = char({'Enter the source zenith angle in ';...
+            'degrees (measured from vertical):'});
+        a = inputdlg(prompt,'Zenith Angle',1,{num2str(obj.zenith)});
+        
+        % Return if the user canceled the operation
+        if isempty(a); return; end
+        
+        % Check that the value is valid
+        ang = str2double(a{1});
+        if ~isnan(ang) && ang >= 0 && ang < 90;
+            obj.zenith = ang;
+        else
+            h = errordlg('Invalid angle!','ERROR');
+            centerwidow(h,obj.imposition);
+        end
+        
+        % Update the white normalization
+        if ~isempty(obj.norm);
+            calcNorm(obj);
+        end
+    end
+    
     % REMOVENORM: removes any white normalization
     function obj = removeNorm(obj)
         obj.norm = [];
@@ -195,21 +221,27 @@ methods
 
         % If a colorspace is defined for the image, try to convert it
         if ~isempty(obj.ColorSpace);
-            conv = [obj.ColorSpace,'2',C]; % Define the conversion
+            conv = lower([obj.ColorSpace,'2',C]); % Define the conversion
 
             % Return if the colorspaces are the same
-            if strcmp(obj.ColorSpace,C);
-                return;
+            if strcmp(obj.ColorSpace,C); return; end
                 
             % Return if conversion is not possible    
-            elseif ~exist(conv,'builtin');
+            try
+                if strcmp(conv,'srgb2xyl');
+                    cform{1} = makecform('srgb2xyz');
+                    cform{2} = makecform('xyz2xyl');
+                else
+                    cform{1} = makecform(conv);
+                end
+            catch
                 mes = ['The conversion is not possible, a direct ',...
                     'conversion is likely not available. Try ',...
                     'converting to XYZ first, then the desired format.'];
                 msgbox(mes,'Conversion Failed');
                 return;
             end
-            cform = makecform(conv);
+            
 
         else % Case when no colorspace is defined
             mes = ['Conversion not possible for this image, no color ',...
@@ -224,7 +256,9 @@ methods
        obj.ColorSpace = C;
        h = waitdlg(mes,get(obj.imhandle,'position'));
        data = reshape(obj.image,obj.imsize);
-       data = applycform(data,cform);
+       for i = 1:length(cform)
+            data = applycform(data,cform{i});
+       end
        obj.image = reshape(data,[],obj.imsize(3));
        close(h);
     end
@@ -502,6 +536,8 @@ w = uimenu(m,'Label','Add White Reference');
         @(src,event)calcNorm(obj),'separator','on','Tag','ApplyWhite');  
     uimenu(m,'Label','Remove White Normalization','callback',...
         @(src,event)removeNorm(obj),'Tag','RemoveWhite');  
+    uimenu(m,'Label','Set Solar Zenith Angle','callback',...
+        @(src,event)solarZenith(obj),'Tag','SolarZenith'); 
     
 % DEFINE THE WORK REGION MENUS    
 w = uimenu(m,'Label','Add Work Region','Separator','on');

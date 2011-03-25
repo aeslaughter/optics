@@ -68,9 +68,7 @@ function h = showDistribution(R,varargin)
                 a.legend{k} = [fname,ext,':',R(i).type,':',...
                     R(i).label,'(',rgb{j},')'];
                 X = data(mask,j);
-                [y(:,i),x(:,i),a] = buildgraph(X,opt,a);
-%                 [f(:,k),xi(:,k)] = ksdensity(double(X),...
-%                       'kernel',opt.kernel,'npoints',opt.npoints);
+                [y(:,k),x(:,k),a] = buildgraph(X,opt,a);
                 k = k + 1;
             end
             
@@ -86,9 +84,6 @@ function h = showDistribution(R,varargin)
             [~,fname,ext] = fileparts(R(i).parent.filename);
             a.legend{i} = [fname,ext,':',R(i).type,':',R(i).label];
             [y(:,i),x(:,i),a] = buildgraph(data,opt,a);
-
-%              [f(:,i),xi(:,i)] = ksdensity(data,'kernel',opt.kernel,...
-%                 'npoints',opt.npoints,'width',opt.bandwidth);
        end
     end
 

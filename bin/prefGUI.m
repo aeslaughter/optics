@@ -283,8 +283,10 @@ end
 % Update any open plugin lists
 h = findall(0,'Tag','pluginlist');
 for i = 1:length(h);
-    fcn = get(h(i),'Callback');
-    fcn(h(i),[]);
+    if ishandle(h(i));
+        fcn = get(h(i),'Callback');
+        fcn(h(i),[]);
+    end
 end
         
 %--------------------------------------------------------------------------
