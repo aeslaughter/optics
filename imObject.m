@@ -217,7 +217,13 @@ methods
     end
     
     % CONVERTCOLORSPACE: converts the image to various colorspaces
-    function obj = convertColorSpace(obj,C,name) 
+    function obj = convertColorSpace(obj,C,varargin) 
+        % Gather optional input
+        if isempty(varargin); 
+            name = C; 
+        else
+            name = varargin{1};
+        end
 
         % If a colorspace is defined for the image, try to convert it
         if ~isempty(obj.ColorSpace);
@@ -476,6 +482,8 @@ set(h,'BusyAction','cancel','Units','Normalize','Name',name,...
     'CloseRequestFcn',@callback_closefcn);
 if ~isempty(obj.imposition);
     set(h,'Position',obj.imposition);
+else
+    obj.imposition = get(h,'Position');
 end
 
 % GATHER THE COLORSPACE INFORMATION

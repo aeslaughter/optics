@@ -17,12 +17,18 @@ if isempty(varargin) || isempty(varargin{1}); % Case w/o filename set
     else
         def = cd;
     end
-
+    
+    % Account for bad directory entries
+    if ~ischar(def); def = cd; end
+    
     % Prompt the user for a file
     if strcmpi(type,'get'); % Opening a file
         [name,pth] = uigetfile(spec,'Select image...',def);
     elseif strcmpi(type,'put'); % Saving a file
         [name,pth] = uiputfile(spec,'Save as...',def);
+    elseif strcmpi(type,'dir'); % Getting a folder
+        [pth] = uigetdir(def,'Select folder...');
+        name = '';
     end
 
     % Check that the cancel buttons was not pushed

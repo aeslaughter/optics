@@ -65,7 +65,7 @@ function h = showDistribution(R,varargin)
         if opt.rgb;
             for j = 1:size(data,2);
                 [~,fname,ext] = fileparts(R(i).parent.filename);
-                a.legend{k} = [fname,ext,':',R(i).type,':',...
+                a.legend{k} = [fname,ext,':',R(i).type,'-',...
                     R(i).label,'(',rgb{j},')'];
                 X = data(mask,j);
                 [y(:,k),x(:,k),a] = buildgraph(X,opt,a);
@@ -82,7 +82,7 @@ function h = showDistribution(R,varargin)
             data = mean(data,2);
             data = data(mask);
             [~,fname,ext] = fileparts(R(i).parent.filename);
-            a.legend{i} = [fname,ext,':',R(i).type,':',R(i).label];
+            a.legend{i} = [fname,ext,':',R(i).type,'-',R(i).label];
             [y(:,i),x(:,i),a] = buildgraph(data,opt,a);
        end
     end

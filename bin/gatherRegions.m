@@ -65,7 +65,7 @@ hlist = uicontrol(d,'Style','listbox','String',list,'Units',...
     'Value',thevalue);
 uicontrol(d,'Style','Pushbutton','String','OK','Units','Normalized',...
     'Position',[0.8,0.05,0.15,0.15],'Callback','uiresume(gcbf)');
-centerwindow(d,currentobj.imposition);
+centerwindow(d,currentObj.imposition);
 uiwait(d); drawnow;
 
 % Gather the selected regions
