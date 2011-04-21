@@ -49,7 +49,7 @@ elseif strcmpi(type,'get');
 else
     filename = varargin{1};
     if exist(filename,'file');
-        ans = questdlg('Overwrite exiting workspace?','Overwrite...',...
+        ans = questdlg('Overwrite exiting file?','Overwrite...',...
             'Yes','Cancel','Cancel');
         if strcmpi(ans,'cancel'); filename = []; end
     end

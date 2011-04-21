@@ -62,8 +62,10 @@ methods
     % imObject: Operates on imObject creation
     function obj = imObject(varargin)
         addpath('imPlugin','bin');
-        obj = openimage(obj,varargin{:});
-        if isempty(obj.filename); return; end;
+        [obj,ext] = openimage(obj,varargin{:});
+        if isempty(obj.filename) || strcmpi(ext,'.imobj'); 
+            return; 
+        end;
         obj.startup;
     end
 
@@ -434,12 +436,13 @@ end % ends static methods
 end % ends the main classdef
 
 %--------------------------------------------------------------------------
-function obj = openimage(obj,varargin)
+function [obj,ext] = openimage(obj,varargin)
 % OPENIMAGE opens the desired image upon creation/loading of imObject class
 
 % SET/GATHER THE IMAGE FILENAME
 spec = {'*.jpg','JPEG Image (*.jpg)';...
-    '*.bip;*.bil','HSI Image (*.bip,*.bil)'};
+    '*.bip;*.bil','HSI Image (*.bip,*.bil)';...
+    '*.imobj', 'imObject File (*.imobj)'};
 obj.filename = gatherfile('get','LastUsedDir',spec,varargin{:});
 if isempty(obj.filename); return; end
 RawColorSpace = '';
@@ -447,6 +450,9 @@ RawColorSpace = '';
 % OPEN THE IMAGE
 [~,~,ext] = fileparts(obj.filename);   
 switch ext;
+    case {'.imobj'};
+        load(obj.filename,'-mat');
+        return;
     case {'.bil','.bip'}; % Opens a hyperspectral image   
         % Reads the *.bip and *.bip.hdr files
         [data, obj.info] = readBIP(obj.filename);
